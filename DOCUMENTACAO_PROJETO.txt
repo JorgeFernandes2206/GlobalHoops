@@ -1,0 +1,351 @@
+================================================================================
+GLOBALHOOPS - DOCUMENTAÇÃO DO PROJETO
+================================================================================
+
+================================================================================
+1. ÁREA DO PROJETO
+================================================================================
+
+Categoria: Aplicação Web de Desporto / Informação Desportiva
+Subcategoria: Plataforma de Basquetebol em Tempo Real
+Domínio: Sports Tech / Sports Analytics & Live Tracking
+
+================================================================================
+2. DESCRIÇÃO / RESUMO DO PROJETO
+================================================================================
+
+GlobalHoops é uma plataforma web moderna e interativa dedicada exclusivamente 
+ao basquetebol, que agrega e apresenta dados em tempo real de jogos, equipas 
+e jogadores de diversas ligas profissionais (NBA, WNBA, etc.) através da 
+integração com APIs públicas da ESPN.
+
+A aplicação permite aos utilizadores autenticados:
+- Acompanhar jogos ao vivo com atualizações automáticas a cada 30 segundos
+- Consultar calendários de jogos (próximos e terminados)
+- Visualizar estatísticas detalhadas de jogadores e equipas
+- Aceder a informações de jogo (lesões, resultados recentes, histórico 
+  head-to-head, standings)
+- Guardar equipas e jogadores favoritos
+- Receber notificações personalizadas
+- Consultar notícias relacionadas com basquetebol
+
+Objetivo Principal: 
+Centralizar numa única plataforma toda a informação relevante sobre 
+basquetebol profissional, com foco em experiência de utilizador premium, 
+performance otimizada e design moderno.
+
+================================================================================
+3. REQUISITOS FUNCIONAIS E NÃO FUNCIONAIS
+================================================================================
+
+--------------------------------------------------------------------------------
+3.1 REQUISITOS FUNCIONAIS
+--------------------------------------------------------------------------------
+
+RF01 - Gestão de Utilizadores
+  RF01.1: Registo de novos utilizadores (nome, email, password)
+  RF01.2: Autenticação (login/logout) com sessões persistentes
+  RF01.3: Gestão de perfil (editar dados, alterar password, eliminar conta)
+  RF01.4: Recuperação de password via email
+
+RF02 - Visualização de Jogos
+  RF02.1: Listar jogos ao vivo com atualização automática (30s)
+  RF02.2: Listar jogos futuros (próximos 7 dias)
+  RF02.3: Listar jogos terminados (últimos 7 dias)
+  RF02.4: Visualizar detalhes completos de um jogo:
+    - Placar e estatísticas em tempo real
+    - Boxscore completo (pontos, ressaltos, assistências por jogador)
+    - Informação do jogo (lesões, lineup)
+    - Resultados recentes das equipas
+    - Histórico head-to-head
+    - Standings/classificações
+
+RF03 - Informação de Jogadores
+  RF03.1: Visualizar top jogadores da semana
+  RF03.2: Consultar perfil detalhado de jogador:
+    - Estatísticas médias (pontos, ressaltos, assistências)
+    - Histórico de jogos recentes
+    - Informações biográficas
+  RF03.3: Pesquisar jogadores
+
+RF04 - Informação de Equipas
+  RF04.1: Listar equipas por liga
+  RF04.2: Consultar detalhes de equipa (roster, estatísticas, calendário)
+  RF04.3: Visualizar standings/classificações
+
+RF05 - Sistema de Favoritos
+  RF05.1: Adicionar equipas aos favoritos
+  RF05.2: Adicionar jogadores aos favoritos
+  RF05.3: Remover favoritos
+  RF05.4: Visualizar lista de favoritos
+
+RF06 - Notificações
+  RF06.1: Receber notificações de início de jogo
+  RF06.2: Notificações de final de jogo
+  RF06.3: Alertas de estatísticas de jogadores favoritos
+  RF06.4: Marcar notificações como lidas
+
+RF07 - Notícias
+  RF07.1: Consultar últimas notícias de basquetebol
+  RF07.2: Filtrar notícias por liga
+
+RF08 - Multi-Liga
+  RF08.1: Suporte para NBA
+  RF08.2: Suporte para WNBA
+  RF08.3: Possibilidade de expansão para outras ligas
+
+--------------------------------------------------------------------------------
+3.2 REQUISITOS NÃO FUNCIONAIS
+--------------------------------------------------------------------------------
+
+RNF01 - Performance
+  RNF01.1: Tempo de carregamento inicial < 3 segundos
+  RNF01.2: Atualização de jogos ao vivo em ≤ 30 segundos
+  RNF01.3: Cache de dados externos (30s-30min conforme volatilidade)
+  RNF01.4: Requests paralelas para endpoints externos (Http::pool)
+  RNF01.5: Timeout de requests API externos: 6 segundos
+  RNF01.6: Retry automático de requests falhados (3 tentativas)
+
+RNF02 - Usabilidade
+  RNF02.1: Interface responsiva (mobile, tablet, desktop)
+  RNF02.2: Dark mode e light mode
+  RNF02.3: Animações suaves (Framer Motion)
+  RNF02.4: Feedback visual de loading states
+  RNF02.5: Mensagens de erro amigáveis
+  RNF02.6: Navegação intuitiva
+
+RNF03 - Segurança
+  RNF03.1: Autenticação obrigatória para funcionalidades principais
+  RNF03.2: Proteção CSRF em formulários
+  RNF03.3: Passwords encriptadas (bcrypt)
+  RNF03.4: Validação server-side de inputs
+  RNF03.5: Proteção contra SQL injection (Eloquent ORM)
+  RNF03.6: Rate limiting em APIs
+
+RNF04 - Escalabilidade
+  RNF04.1: Arquitetura modular (Services, Controllers, Models)
+  RNF04.2: Cache distribuído (Redis ready)
+  RNF04.3: Filas para tarefas assíncronas (Laravel Queue)
+  RNF04.4: Database migrations versionadas
+  RNF04.5: Possibilidade de horizontal scaling
+
+RNF05 - Manutenibilidade
+  RNF05.1: Código seguindo PSR-12 (PHP) e ESLint (JS)
+  RNF05.2: Logging estruturado (Laravel Log)
+  RNF05.3: Testes automatizados (PHPUnit, Feature tests)
+  RNF05.4: Documentação inline (PHPDoc)
+  RNF05.5: Git flow com versionamento semântico
+
+RNF06 - Disponibilidade
+  RNF06.1: Uptime target: 99.5%
+  RNF06.2: Graceful degradation (fallbacks se API externa falhar)
+  RNF06.3: Mensagens informativas quando dados indisponíveis
+  RNF06.4: Health checks e monitoring
+
+RNF07 - Compatibilidade
+  RNF07.1: Browsers: Chrome 100+, Firefox 100+, Safari 15+, Edge 100+
+  RNF07.2: PHP 8.2+
+  RNF07.3: Node.js 18+
+  RNF07.4: SQLite 3.x / MySQL 8.x / PostgreSQL 14+
+
+================================================================================
+4. TECNOLOGIAS, MATERIAL E SOFTWARE A UTILIZAR
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1 BACKEND
+--------------------------------------------------------------------------------
+
+Framework & Linguagem:
+  - PHP 8.2+ - Linguagem de programação
+  - Laravel 12.0 - Framework PHP moderno (MVC, routing, ORM, queue, cache)
+  - Laravel Sanctum 4.0 - Autenticação API
+  - Inertia.js Laravel 2.0 - Server-side rendering adapter
+
+Base de Dados:
+  - SQLite (desenvolvimento local)
+  - MySQL 8.x ou PostgreSQL 14+ (produção recomendado)
+  - Eloquent ORM - Object-relational mapping
+
+Cache & Filas:
+  - Laravel Cache (File/Redis driver)
+  - Laravel Queue - Processamento assíncrono
+
+APIs Externas:
+  - ESPN API (site.api.espn.com) - Dados de jogos, equipas, jogadores, standings
+
+Bibliotecas PHP:
+  - Guzzle HTTP Client - Requests HTTP (via Laravel HTTP)
+  - Carbon - Manipulação de datas
+  - Laravel Breeze - Scaffolding de autenticação
+
+Ferramentas de Desenvolvimento:
+  - Composer - Dependency manager
+  - Laravel Pint - Code style fixer (PSR-12)
+  - PHPUnit 11.5 - Testing framework
+  - Laravel Tinker - REPL/Console
+  - Laravel Pail - Log viewer
+
+--------------------------------------------------------------------------------
+4.2 FRONTEND
+--------------------------------------------------------------------------------
+
+Framework & Bibliotecas:
+  - React 18.2 - UI library
+  - Inertia.js React 2.0 - SPA sem API (server-driven)
+  - Vite 7.0 - Build tool e dev server
+
+Styling:
+  - Tailwind CSS 3.2 - Utility-first CSS framework
+  - Tailwind Forms - Form styling plugin
+  - PostCSS - CSS processor
+  - Autoprefixer - Vendor prefix automático
+
+UI & Animações:
+  - Framer Motion 12.23 - Animações e transições
+  - Lucide React 0.546 - Icon library moderna
+  - Headless UI 2.0 - Unstyled accessible components
+
+Utilities:
+  - Axios 1.11 - HTTP client
+  - Ziggy 2.0 - Laravel routes no JavaScript
+
+--------------------------------------------------------------------------------
+4.3 DEVOPS & TOOLING
+--------------------------------------------------------------------------------
+
+Controlo de Versões:
+  - Git - Version control
+  - GitHub / GitLab (recomendado)
+
+Ambiente de Desenvolvimento:
+  - Laravel Sail - Docker development environment (opcional)
+  - Node.js 18+ - JavaScript runtime
+  - npm - Package manager
+  - Concurrently - Run múltiplos comandos em paralelo
+
+Servidor Web (Produção):
+  - Nginx ou Apache com PHP-FPM
+  - Supervisor - Process monitor (para queue workers)
+  - Certbot - SSL certificates (Let's Encrypt)
+
+Deployment:
+  - Laravel Forge (recomendado - managed hosting)
+  - DigitalOcean / AWS / Linode (VPS)
+  - Vercel / Netlify (alternativa para frontend estático)
+
+Monitoring & Logs:
+  - Laravel Telescope (desenvolvimento - debug)
+  - Sentry (produção - error tracking)
+  - New Relic / DataDog (performance monitoring)
+
+--------------------------------------------------------------------------------
+4.4 ESTRUTURA DE FICHEIROS PRINCIPAIS
+--------------------------------------------------------------------------------
+
+GlobalHoops/
+├── app/
+│   ├── Console/Commands/          # Artisan commands
+│   ├── Http/
+│   │   ├── Controllers/           # Controladores (Game, Player, Auth, etc.)
+│   │   ├── Middleware/            # Middlewares custom
+│   │   └── Requests/              # Form requests validation
+│   ├── Models/                    # Eloquent models (User, UserFavorite)
+│   ├── Services/                  # Business logic (BasketballApiService)
+│   └── Providers/                 # Service providers
+├── database/
+│   ├── migrations/                # Database schema migrations
+│   ├── seeders/                   # Data seeders
+│   └── factories/                 # Model factories (testing)
+├── resources/
+│   ├── js/
+│   │   ├── Components/            # React components reutilizáveis
+│   │   ├── Layouts/               # Layout components (Auth, Guest)
+│   │   └── Pages/                 # Inertia pages (Dashboard, Game, Player, Auth)
+│   ├── css/                       # Estilos globais
+│   └── views/                     # Blade templates (app.blade.php - entry point)
+├── routes/
+│   ├── web.php                    # Rotas web principais
+│   ├── auth.php                   # Rotas de autenticação
+│   └── console.php                # Rotas console (artisan)
+├── public/                        # Assets públicos (build/assets gerados por Vite)
+├── storage/
+│   ├── app/                       # Uploaded files
+│   ├── logs/                      # Application logs
+│   └── framework/cache/           # Framework cache
+├── tests/
+│   ├── Feature/                   # Feature tests
+│   └── Unit/                      # Unit tests
+├── composer.json                  # PHP dependencies
+├── package.json                   # Node.js dependencies
+├── vite.config.js                 # Vite configuration
+└── tailwind.config.js             # Tailwind configuration
+
+--------------------------------------------------------------------------------
+4.5 REQUISITOS DE SISTEMA
+--------------------------------------------------------------------------------
+
+Desenvolvimento:
+  - PHP 8.2 ou superior
+  - Composer 2.x
+  - Node.js 18.x ou superior + npm
+  - SQLite 3.x (incluído) ou MySQL/PostgreSQL
+  - Git
+
+Produção:
+  - Servidor Linux (Ubuntu 22.04 LTS recomendado)
+  - PHP 8.2+ (com extensões: mbstring, xml, curl, pdo, bcmath, tokenizer)
+  - Nginx/Apache
+  - MySQL 8.x ou PostgreSQL 14+
+  - Redis 6.x+ (recomendado para cache e sessões)
+  - Supervisor (para queue workers)
+  - SSL certificate (HTTPS obrigatório)
+  - Mínimo 2GB RAM, 2 vCPU, 20GB storage
+
+================================================================================
+5. FLUXOS PRINCIPAIS
+================================================================================
+
+Fluxo de Autenticação:
+  1. Utilizador acede à página inicial (Welcome)
+  2. Clica em "Registar" → preenche formulário → conta criada
+  3. Login com email/password → redirecionado para Dashboard
+
+Fluxo de Visualização de Jogo:
+  1. Dashboard mostra jogos ao vivo/próximos/terminados
+  2. Utilizador clica num jogo → GameController::page
+  3. Backend chama BasketballApiService::getGameSummary (ESPN API)
+  4. Extrai lesões, resultados recentes, head-to-head, standings
+  5. Renderiza página Game/Show.jsx com todos os dados
+  6. Frontend exibe placar, boxscore, estatísticas, injuries, etc.
+
+Fluxo de Favoritos:
+  1. Utilizador visita página de jogador/equipa
+  2. Clica em "Adicionar aos Favoritos"
+  3. POST /api/favorites → FavoriteController::store
+  4. Guarda na tabela user_favorites
+  5. Favorito aparece no Dashboard
+
+================================================================================
+6. PRÓXIMOS PASSOS / ROADMAP
+================================================================================
+
+Fase Atual: MVP funcional com otimizações de performance em andamento
+
+Melhorias Planeadas:
+  - Sistema de notificações push (WebSockets/Pusher)
+  - Pré-computação de dados em background jobs
+  - Suporte para mais ligas (EuroLeague, ACB, etc.)
+  - Comparador de jogadores
+  - Estatísticas avançadas (PER, True Shooting %, etc.)
+  - Modo offline/PWA
+  - Testes end-to-end (Cypress/Playwright)
+  - CI/CD pipeline automatizado
+
+================================================================================
+FIM DA DOCUMENTAÇÃO
+================================================================================
+
+Esta documentação reflete o estado atual do projeto GlobalHoops (Novembro 2025)
+e pode ser utilizada para apresentações académicas, onboarding de novos 
+developers, ou documentação técnica formal.

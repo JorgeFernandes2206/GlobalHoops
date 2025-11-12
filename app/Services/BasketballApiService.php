@@ -144,8 +144,363 @@ class BasketballApiService
                 return strtotime($a['date']) - strtotime($b['date']);
             });
 
+            // Try to augment upcoming games with external odds provider (the-odds-api) when available.
+            // We will fetch odds for the NBA sport and attempt to match events by team names and commence time.
+            try {
+                $gamesForMatching = array_map(fn($g) => [
+                    'id' => $g['id'] ?? null,
+                    'date' => $g['date'] ?? null,
+                    'home' => $g['teams']['home']['name'] ?? null,
+                    'away' => $g['teams']['away']['name'] ?? null,
+                ], $allGames);
+
+                $oddsMap = $this->fetchOddsApiForGames('basketball_nba', $gamesForMatching);
+                foreach ($allGames as &$game) {
+                    if (empty($game['odds']) && isset($oddsMap[$game['id']])) {
+                        $game['odds'] = $oddsMap[$game['id']];
+                    }
+                }
+                unset($game);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to fetch/merge Odds-API odds for upcoming games: '.$e->getMessage());
+            }
+
             return ['response' => $allGames];
         });
+    }
+
+    /**
+     * Fetch odds from SportsGameOdds (SGO) for a list of event IDs.
+     * Uses env vars: SGO_BASE_URL (default provided), SGO_API_KEY (optional).
+     * Returns a map keyed by event id => raw event payload from SGO.
+     */
+    private function fetchSgoOddsForEvents(string $league, array $eventIds = []): array
+    {
+        $base = env('SGO_BASE_URL', 'https://api.sportsgameodds.com/v2');
+        $apiKey = env('SGO_API_KEY', null);
+        $leagueId = strtoupper($league);
+
+        $cacheKey = 'sgo_odds_' . strtolower($league) . '_' . md5(json_encode($eventIds));
+        return Cache::remember($cacheKey, 60, function () use ($base, $apiKey, $leagueId, $eventIds) {
+            $url = rtrim($base, '/') . '/events';
+            $query = ['oddsAvailable' => 'true', 'leagueID' => $leagueId];
+            if (!empty($eventIds)) {
+                // SGO supports filtering by event IDs via eventIDs param (comma-separated)
+                $query['eventIDs'] = implode(',', $eventIds);
+            }
+
+            try {
+                $client = Http::timeout(8);
+                if ($apiKey) {
+                    // prefer x-api-key header for SGO; if they require a bearer token the env can include prefix
+                    $client = $client->withHeaders(['x-api-key' => $apiKey]);
+                }
+
+                $resp = $client->get($url, $query);
+                if ($resp->successful()) {
+                    $json = $resp->json();
+                    // Expecting events array; try common keys
+                    $events = $json['events'] ?? $json['data'] ?? ($json['response'] ?? $json);
+                    $map = [];
+                    if (is_array($events)) {
+                        foreach ($events as $ev) {
+                            $id = $ev['id'] ?? $ev['eventId'] ?? $ev['eventID'] ?? null;
+                            if ($id) {
+                                $map[(string)$id] = $ev;
+                            }
+                        }
+                    }
+                    return $map;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('SGO odds fetch error', ['error' => $e->getMessage()]);
+            }
+
+            return [];
+        });
+    }
+
+    /**
+     * Normalize a single SGO event payload into our odds shape.
+     */
+    private function normalizeSgoEventOdds(array $ev): array
+    {
+        $raw = $ev;
+        $provider = $ev['provider'] ?? 'SGO';
+
+        $homeMoneyline = $ev['homeMoneyline'] ?? $ev['home_odds'] ?? null;
+        $awayMoneyline = $ev['awayMoneyline'] ?? $ev['away_odds'] ?? null;
+        $overUnder = $ev['overUnder'] ?? $ev['total'] ?? null;
+        $homeSpread = $ev['homeSpread'] ?? $ev['home_spread'] ?? null;
+        $awaySpread = $ev['awaySpread'] ?? $ev['away_spread'] ?? null;
+
+        // Try to extract from markets if present (common provider format)
+        if (isset($ev['markets']) && is_array($ev['markets'])) {
+            foreach ($ev['markets'] as $m) {
+                $type = strtolower($m['marketType'] ?? ($m['type'] ?? ''));
+                if (str_contains($type, 'money') || str_contains($type, 'ml') || $type === 'moneyline') {
+                    // try home/away prices
+                    $homeMoneyline = $homeMoneyline ?? ($m['homePrice'] ?? ($m['prices'][0]['price'] ?? null));
+                    $awayMoneyline = $awayMoneyline ?? ($m['awayPrice'] ?? ($m['prices'][1]['price'] ?? null));
+                }
+                if (str_contains($type, 'spread')) {
+                    $homeSpread = $homeSpread ?? ($m['homeValue'] ?? ($m['prices'][0]['point'] ?? null));
+                    $awaySpread = $awaySpread ?? ($m['awayValue'] ?? ($m['prices'][1]['point'] ?? null));
+                }
+                if (str_contains($type, 'total') || str_contains($type, 'over')) {
+                    $overUnder = $overUnder ?? ($m['total'] ?? ($m['point'] ?? null));
+                }
+            }
+        }
+
+        return [
+            'provider' => $provider,
+            'overUnder' => $overUnder,
+            'homeMoneyline' => $homeMoneyline,
+            'awayMoneyline' => $awayMoneyline,
+            'homeSpread' => $homeSpread,
+            'awaySpread' => $awaySpread,
+            'raw' => $raw,
+        ];
+    }
+
+    /**
+     * Fetch odds from The Odds API (the-odds-api.com) for a list of candidate games.
+     * Expects $sport like 'basketball_nba' and $candidates as array of ['id','date','home','away']
+     * Returns map of local game id => normalized odds.
+     */
+    private function fetchOddsApiForGames(string $sport, array $candidates = []): array
+    {
+        $base = env('ODDS_API_BASE', 'https://api.the-odds-api.com/v4');
+        $apiKey = env('ODDS_API_KEY');
+        if (empty($apiKey)) {
+            // If no API key is configured, skip calling external odds provider.
+            Log::warning('ODDS_API_KEY not set; skipping Odds-API fetch');
+            return [];
+        }
+
+        // Cache key per sport and day to limit requests
+        $cacheKey = 'odds_api_' . $sport . '_' . date('Ymd');
+        return Cache::remember($cacheKey, 60, function () use ($base, $apiKey, $sport, $candidates) {
+            $url = rtrim($base, '/') . "/sports/{$sport}/odds";
+            $query = [
+                'regions' => 'us',
+                'markets' => 'h2h,spreads,totals',
+                'oddsFormat' => 'american',
+                'dateFormat' => 'iso',
+                'apiKey' => $apiKey,
+            ];
+
+                try {
+                    $client = Http::timeout(8);
+                    // In local development allow skipping SSL verification (developer machine may lack CA bundle)
+                    if (app()->environment('local')) {
+                        $client = $client->withOptions(['verify' => false]);
+                    }
+                    $resp = $client->get($url, $query);
+                if (!$resp->successful()) {
+                    Log::warning('Odds-API non-success response', ['status' => $resp->status(), 'body' => $resp->body()]);
+                    return [];
+                }
+
+                $list = $resp->json();
+                if (!$list) return [];
+
+                // Some responses from the Odds API wrap the actual array under a 'value' key (or similar).
+                // Normalize to an array of entries regardless of top-level shape.
+                $entries = [];
+                if (isset($list['value']) && is_array($list['value'])) {
+                    $entries = $list['value'];
+                } elseif (isset($list['data']) && is_array($list['data'])) {
+                    $entries = $list['data'];
+                } elseif (is_array($list)) {
+                    // If the top-level array is an associative array with numeric keys, use it.
+                    // If it's a sequential array, use it directly.
+                    $isSequential = array_values($list) === $list;
+                    $entries = $isSequential ? $list : (array_values($list)[0] ?? []);
+                }
+
+                if (!is_array($entries)) return [];
+
+                // Debug: log counts to help troubleshoot matching issues
+                try {
+                    Log::debug('Odds-API fetched entries', ['sport' => $sport, 'entries_count' => count($entries), 'candidates_count' => count($candidates ?? [])]);
+                } catch (\Throwable $e) {
+                    // ignore logging failures
+                }
+
+                $map = [];
+                // Normalize provider markets for easier matching
+                foreach ($entries as $entry) {
+                    // Entry contains: id (event id), sport_key, commence_time, home_team, away_team, sites[]
+                    $home = $entry['home_team'] ?? null;
+                    $away = $entry['away_team'] ?? null;
+                    $commence = $entry['commence_time'] ?? null;
+
+                    // Try to find a candidate that matches by team names and similar commence_time
+                    foreach ($candidates as $cand) {
+                        if (!$cand['id']) continue;
+                        $matchHome = $this->teamsMatch($home, $cand['home']);
+                        $matchAway = $this->teamsMatch($away, $cand['away']);
+                        $timeDiff = 0;
+                        if ($commence && $cand['date']) {
+                            try { $timeDiff = abs(strtotime($commence) - strtotime($cand['date'])); } catch (\Throwable $e) { $timeDiff = PHP_INT_MAX; }
+                        }
+                        if ($matchHome && $matchAway && $timeDiff < 3600*6) { // within 6 hours
+                            $map[$cand['id']] = $this->normalizeOddsApiEntry($entry);
+                            try {
+                                Log::debug('Odds-API match', [
+                                    'sport' => $sport,
+                                    'candidate_id' => $cand['id'],
+                                    'candidate_home' => $cand['home'] ?? null,
+                                    'candidate_away' => $cand['away'] ?? null,
+                                    'entry_id' => $entry['id'] ?? null,
+                                    'entry_home' => $home,
+                                    'entry_away' => $away,
+                                    'commence' => $commence,
+                                    'candidate_date' => $cand['date'] ?? null,
+                                    'time_diff_seconds' => $timeDiff,
+                                ]);
+                            } catch (\Throwable $e) {
+                                // ignore logging failures
+                            }
+                        }
+                    }
+                }
+
+                try {
+                    Log::debug('Odds-API mapping result', ['matches' => count($map)]);
+                } catch (\Throwable $e) {}
+
+                return $map;
+            } catch (\Throwable $e) {
+                Log::warning('Odds-API fetch error', ['error' => $e->getMessage()]);
+                return [];
+            }
+        });
+    }
+
+    /**
+     * Simple fuzzy team name matcher (case-insensitive, partial token match)
+     */
+    private function teamsMatch(?string $a, ?string $b): bool
+    {
+        if (!$a || !$b) return false;
+        $a = strtolower($a);
+        $b = strtolower($b);
+        if ($a === $b) return true;
+        // token overlap
+        $ta = preg_split('/\s+/', $a);
+        $tb = preg_split('/\s+/', $b);
+        $common = array_intersect($ta, $tb);
+        return count($common) > 0;
+    }
+
+    /**
+     * Normalize an entry from the Odds-API into our minimal odds shape.
+     */
+    private function normalizeOddsApiEntry(array $entry): array
+    {
+        $sites = $entry['bookmakers'] ?? $entry['sites'] ?? [];
+
+        // Collect normalized per-provider markets so the frontend can show multiple books
+        $providers = [];
+        foreach ($sites as $site) {
+            $markets = $site['markets'] ?? [];
+            $homeMoney = null; $awayMoney = null; $homeSpread = null; $awaySpread = null; $total = null;
+
+            foreach ($markets as $m) {
+                $key = strtolower($m['key'] ?? ($m['marketKey'] ?? ''));
+                $outcomes = $m['outcomes'] ?? [];
+
+                if ($key === 'h2h' || $key === 'moneyline' || str_contains($key, 'h2h') ) {
+                    foreach ($outcomes as $p) {
+                        if (isset($p['name']) && strtolower($p['name']) === strtolower($entry['home_team'] ?? '')) {
+                            $homeMoney = $p['price'] ?? $p['point'] ?? $homeMoney;
+                        }
+                        if (isset($p['name']) && strtolower($p['name']) === strtolower($entry['away_team'] ?? '')) {
+                            $awayMoney = $p['price'] ?? $p['point'] ?? $awayMoney;
+                        }
+                    }
+                }
+
+                if ($key === 'spreads' || str_contains($key, 'spread')) {
+                    foreach ($outcomes as $p) {
+                        if (isset($p['name']) && strtolower($p['name']) === strtolower($entry['home_team'] ?? '')) {
+                            $homeSpread = $p['point'] ?? $p['price'] ?? $homeSpread;
+                        }
+                        if (isset($p['name']) && strtolower($p['name']) === strtolower($entry['away_team'] ?? '')) {
+                            $awaySpread = $p['point'] ?? $p['price'] ?? $awaySpread;
+                        }
+                    }
+                }
+
+                if ($key === 'totals' || str_contains($key, 'total') || isset($m['total'])) {
+                    $total = $m['total'] ?? ($outcomes[0]['point'] ?? $total);
+                }
+            }
+
+            $providers[] = [
+                'key' => $site['key'] ?? null,
+                'title' => $site['title'] ?? $site['bookmaker'] ?? null,
+                'last_update' => $site['last_update'] ?? $site['lastUpdate'] ?? null,
+                'homeMoneyline' => $homeMoney,
+                'awayMoneyline' => $awayMoney,
+                'homeSpread' => $homeSpread,
+                'awaySpread' => $awaySpread,
+                'overUnder' => $total,
+                'raw' => $site,
+            ];
+        }
+
+        // Choose the first provider as the summary 'provider' for backward compatibility
+        $primary = $providers[0] ?? null;
+
+        return [
+            'provider' => $primary['title'] ?? 'Odds-API',
+            'overUnder' => $primary['overUnder'] ?? null,
+            'homeMoneyline' => $primary['homeMoneyline'] ?? null,
+            'awayMoneyline' => $primary['awayMoneyline'] ?? null,
+            'homeSpread' => $primary['homeSpread'] ?? null,
+            'awaySpread' => $primary['awaySpread'] ?? null,
+            'providers' => $providers,
+            'raw' => $entry,
+        ];
+    }
+
+    /**
+     * Public helper: get odds for a single game identified by ESPN game id.
+     * Accepts optional $summary (ESPN summary payload) to avoid extra remote calls.
+     */
+    public function getOddsForGame(string $league, string $gameId, array $summary = null): ?array
+    {
+        // Build candidate from summary if provided, otherwise try to fetch summary
+        if (!$summary) {
+            $summary = $this->getGameSummary($league, $gameId);
+        }
+
+        if (!$summary || !isset($summary['header'])) {
+            return null;
+        }
+
+        $header = $summary['header'];
+        $comp = $header['competitions'][0] ?? null;
+        $competitors = $comp['competitors'] ?? [];
+        $home = null; $away = null;
+        foreach ($competitors as $c) {
+            if (($c['homeAway'] ?? '') === 'home') $home = $c;
+            if (($c['homeAway'] ?? '') === 'away') $away = $c;
+        }
+
+        $candidate = [
+            'id' => $gameId,
+            'date' => $header['competitions'][0]['date'] ?? $header['date'] ?? null,
+            'home' => $home['team']['displayName'] ?? ($home['team']['name'] ?? null),
+            'away' => $away['team']['displayName'] ?? ($away['team']['name'] ?? null),
+        ];
+
+        $map = $this->fetchOddsApiForGames('basketball_nba', [$candidate]);
+        return $map[$gameId] ?? null;
     }
 
     // Jogos finalizados (últimos X dias) de todas as ligas

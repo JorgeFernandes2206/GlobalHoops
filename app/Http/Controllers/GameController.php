@@ -91,6 +91,9 @@ class GameController extends Controller
 
             // Standings change infrequently; cache for longer
             $extras['standings'] = \Cache::remember("standings_{$league}", 1800, fn() => $this->basketballApi->getStandings($league, $summaryRaw));
+
+            // Odds for this specific game (cache briefly)
+            $extras['odds'] = \Cache::remember("game_odds_{$league}_{$id}", 60, fn() => $this->basketballApi->getOddsForGame($league, $id, $summaryRaw));
         } catch (\Throwable $e) {
             \Log::warning('Failed to fetch extra game datasets: '.$e->getMessage());
             $extras = array_merge($extras, [

@@ -5,7 +5,7 @@ import { ArrowLeft, MapPin, Users, Calendar, Trophy, TrendingUp } from 'lucide-r
 import { useState } from 'react';
 import HeroGame from '@/Components/Dashboard/HeroGame';
 
-export default function Show({ auth, game, league, injuriesHome = [], injuriesAway = [], recentHome = [], recentAway = [], headToHead = [], standings = null }) {
+export default function Show({ auth, game, league, injuriesHome = [], injuriesAway = [], recentHome = [], recentAway = [], headToHead = [], standings = null, odds = null }) {
     const [activeTab, setActiveTab] = useState('boxscore'); // boxscore, stats, leaders
 
     const header = game?.header || {};
@@ -147,6 +147,41 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                             id: game?.header?.id || game?.id || null,
                         }} />
                     </div>
+
+                    {/* Odds display for upcoming games (if provided) */}
+                    {odds ? (
+                        <div className="mx-auto max-w-[1920px] px-6 sm:px-8 lg:px-12">
+                            <div className="mt-4 p-4 bg-gray-800/50 border border-gray-700/40 rounded-2xl">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-sm text-gray-400">Odds (providers)</div>
+                                        <div className="flex items-center gap-2">
+                                            {(odds.providers || []).slice(0,3).map((p, idx) => (
+                                                <div key={idx} className="px-3 py-1 bg-gray-700/20 rounded-md">
+                                                    <div className="text-xs font-semibold text-white">{p.title || p.key || 'Book'}</div>
+                                                    <div className="text-xs text-gray-300">{p.homeMoneyline !== undefined && p.awayMoneyline !== undefined ? `${p.homeMoneyline>0?`+${p.homeMoneyline}`:p.homeMoneyline}/${p.awayMoneyline}` : (p.overUnder ?? '-')}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="text-sm text-gray-300">{odds.providers && odds.providers[0] && (odds.providers[0].last_update ? new Date(odds.providers[0].last_update).toLocaleString() : '')}</div>
+                                </div>
+
+                                <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-300">
+                                    {(odds.providers || []).slice(0,6).map((p, i) => (
+                                        <div key={i} className="bg-gray-900/30 p-3 rounded-md">
+                                            <div className="text-xs text-gray-400">{p.title || p.key}</div>
+                                            <div className="font-semibold text-white mt-1">
+                                                {p.homeMoneyline !== undefined && p.awayMoneyline !== undefined ? `${p.homeMoneyline>0?`+${p.homeMoneyline}`:p.homeMoneyline} / ${p.awayMoneyline}` : '-'}
+                                            </div>
+                                            <div className="text-xs text-gray-300 mt-1">Spread: {p.homeSpread !== undefined ? (p.homeSpread>0?`+${p.homeSpread}`:p.homeSpread) : '-'}</div>
+                                            <div className="text-xs text-gray-300">Total: {p.overUnder ?? '-'}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ) : null}
 
                     {/* Tabs de Navegação */}
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden">

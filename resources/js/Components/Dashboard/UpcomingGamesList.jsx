@@ -3,6 +3,17 @@ import { Link } from '@inertiajs/react';
 import { Calendar, Clock, ChevronRight } from 'lucide-react';
 
 export default function UpcomingGamesList({ games }) {
+    // Small format helpers for odds display
+    const fmtMl = (v) => {
+        if (v === null || v === undefined) return null;
+        return (v > 0 ? `+${v}` : String(v));
+    };
+
+    const fmtSpread = (v) => {
+        if (v === null || v === undefined) return null;
+        return (v > 0 ? `+${v}` : String(v));
+    };
+
     if (!games || games.length === 0) {
         return (
             <div className="relative group overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900/80 via-gray-800/80 to-gray-900/80 backdrop-blur-2xl p-8 border border-gray-700/50 shadow-2xl h-full">
@@ -33,7 +44,7 @@ export default function UpcomingGamesList({ games }) {
             {/* Animated Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <div className="absolute inset-0 shadow-inner shadow-blue-500/10" />
-            
+
             <div className="relative">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-8">
@@ -64,7 +75,7 @@ export default function UpcomingGamesList({ games }) {
                                 >
                                     {/* Hover Glow */}
                                     <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/0 via-blue-500/30 to-blue-500/0 rounded-2xl opacity-0 group-hover/item:opacity-100 blur transition-all duration-300" />
-                                    
+
                                     <div className="relative p-4 bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-xl rounded-2xl border border-gray-700/40 group-hover/item:border-blue-500/40 transition-all duration-300 shadow-lg">
                                         <div className="flex items-center justify-between">
                                             {/* Teams */}

@@ -19,11 +19,33 @@ Route::get('/', function () {
 
 Route::get('/inicio', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('inicio');
 
+// Backwards-compatible route name for auth scaffolding and packages that expect 'dashboard'
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Debug route: expose upcoming games JSON in local environment for quick testing (no auth)
+if (app()->environment('local')) {
+    Route::get('/debug/upcoming', function (App\Services\BasketballApiService $service) {
+        return $service->getUpcomingGames(3);
+    });
+}
+
+// Debug per-game route for local testing (returns summary + extras including odds)
+if (app()->environment('local')) {
+    Route::get('/debug/game/{league}/{id}', function (App\Services\BasketballApiService $service, string $league, string $id) {
+        $summary = $service->getGameSummary($league, $id);
+        $odds = $service->getOddsForGame($league, $id, $summary);
+        return [
+            'summary' => $summary,
+            'odds' => $odds,
+        ];
+    });
+}
 
 // API Routes para refresh
 Route::middleware(['auth'])->prefix('api')->group(function () {

@@ -81,141 +81,94 @@ export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, 
         >
             <Head title="GlobalHoops" />
 
-            {/* Premium Hero Section */}
-            <div className="relative overflow-hidden">
-                {/* Animated Background */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-950 to-black" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,45,32,0.15)_0%,_transparent_50%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(255,140,0,0.1)_0%,_transparent_50%)]" />
-
-                {/* Floating Orbs */}
-                <motion.div
-                    animate={{
-                        x: [0, 100, 0],
-                        y: [0, -50, 0],
-                        scale: [1, 1.2, 1],
-                    }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-20 left-10 w-96 h-96 bg-[#FF2D20]/10 rounded-full blur-3xl"
-                />
-                <motion.div
-                    animate={{
-                        x: [0, -80, 0],
-                        y: [0, 80, 0],
-                        scale: [1, 1.1, 1],
-                    }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-20 right-10 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"
-                />
-
-                <div className="relative mx-auto max-w-[1920px] px-6 sm:px-8 lg:px-12 pt-12 pb-20">
-                    {/* Hero Game with Premium Frame */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 40 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.7, ease: "easeOut" }}
-                        className="relative"
-                    >
-                        {/* Glow Effect Behind Hero */}
-                        <div className="absolute -inset-4 bg-gradient-to-r from-[#FF2D20]/20 via-orange-600/20 to-[#FF2D20]/20 rounded-[3rem] blur-3xl opacity-30" />
-                        <div className="relative">
-                            <HeroGame game={featuredGame} />
-                        </div>
-                    </motion.div>
-
-                    {/* Live Games Section - Below Hero */}
-                    {liveGames && liveGames.length > 0 && (
+            {/* Compact Dashboard Layout */}
+            <div className="bg-gradient-to-b from-gray-900 via-gray-900 to-black">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+                    {/* Featured Game - Compact */}
+                    {featuredGame && (
                         <motion.div
-                            initial={{ opacity: 0, y: 30 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3, duration: 0.6 }}
-                            className="mt-16"
+                            className="mb-6 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden"
                         >
-                            <LiveGamesGrid games={liveGames} />
+                            <HeroGame game={featuredGame} />
                         </motion.div>
                     )}
-                </div>
-            </div>
 
-            {/* Premium Content Grid */}
-            <div className="relative bg-black">
-                {/* Subtle gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-950/50 to-transparent" />
-
-                <div className="relative mx-auto max-w-[1920px] px-6 sm:px-8 lg:px-12 py-16">
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-                        {/* Main Content Column - 8/12 */}
-                        <div className="xl:col-span-8 space-y-12">
-                            {/* Upcoming & Finished Games - Premium Cards */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Main Grid - Tudo em uma linha */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        {/* Left Column - Games */}
+                        <div className="lg:col-span-8 space-y-4">
+                            {/* Live Games - Horizontal compact */}
+                            {liveGames && liveGames.length > 0 && (
                                 <motion.div
-                                    initial={{ opacity: 0, x: -40 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.4, duration: 0.6 }}
-                                    className="relative"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                    className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
                                 >
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-3xl blur-xl opacity-0 hover:opacity-100 transition-opacity duration-500" />
-                                    <div className="relative">
-                                        <UpcomingGamesList games={upcomingGames || []} />
-                                    </div>
+                                    <LiveGamesGrid games={liveGames} />
+                                </motion.div>
+                            )}
+
+                            {/* Upcoming & Finished - Side by side */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
+                                >
+                                    <UpcomingGamesList games={upcomingGames || []} />
                                 </motion.div>
 
                                 <motion.div
-                                    initial={{ opacity: 0, x: 40 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.4, duration: 0.6 }}
-                                    className="relative"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
                                 >
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-3xl blur-xl opacity-0 hover:opacity-100 transition-opacity duration-500" />
-                                    <div className="relative">
-                                        <FinishedGamesGrid games={finishedGames || []} />
-                                    </div>
+                                    <FinishedGamesGrid games={finishedGames || []} />
                                 </motion.div>
                             </div>
 
-                            {/* News Section - Premium Card */}
+                            {/* News - Compact */}
                             <motion.div
-                                initial={{ opacity: 0, y: 40 }}
+                                initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.6, duration: 0.6 }}
-                                className="relative"
+                                transition={{ delay: 0.3 }}
+                                className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
                             >
-                                <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 rounded-3xl blur-xl opacity-0 hover:opacity-100 transition-opacity duration-500" />
-                                <div className="relative">
-                                    <NewsSection news={news || []} />
-                                </div>
+                                <NewsSection news={news || []} />
                             </motion.div>
                         </div>
 
-                        {/* Premium Sidebar - 4/12 */}
-                        <div className="xl:col-span-4 space-y-8">
+                        {/* Right Sidebar - Sticky */}
+                        <div className="lg:col-span-4 lg:sticky lg:top-6 lg:self-start space-y-4">
+                            {/* Top Players */}
                             <motion.div
-                                initial={{ opacity: 0, x: 40 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.5, duration: 0.6 }}
-                                className="xl:sticky xl:top-8 space-y-8"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
                             >
-                                {/* Top Players with Glow */}
-                                <div className="relative">
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-[#FF2D20]/20 to-orange-600/20 rounded-3xl blur-xl opacity-50" />
-                                    <div className="relative">
-                                        <TopPlayersCard players={topPlayers || []} />
-                                    </div>
-                                </div>
+                                <TopPlayersCard players={topPlayers || []} />
+                            </motion.div>
 
-                                {/* Notifications with Glow */}
-                                <div className="relative">
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-3xl blur-xl opacity-50" />
-                                    <div className="relative">
-                                        <NotificationsSidebar
-                                            notifications={notifications || []}
-                                            liveGames={liveGames}
-                                            upcomingGames={upcomingGames}
-                                            topPlayers={topPlayers}
-                                            news={news}
-                                        />
-                                    </div>
-                                </div>
+                            {/* Notifications */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
+                            >
+                                <NotificationsSidebar
+                                    notifications={notifications || []}
+                                    liveGames={liveGames}
+                                    upcomingGames={upcomingGames}
+                                    topPlayers={topPlayers}
+                                    news={news}
+                                />
                             </motion.div>
                         </div>
                     </div>

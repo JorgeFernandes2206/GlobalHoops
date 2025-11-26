@@ -12,110 +12,82 @@ export default function AuthenticatedLayout({ header, children }) {
         useState(false);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-100 via-white to-orange-300 dark:from-black dark:via-zinc-900 dark:to-orange-900">
-            {/* Background Animation */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 right-20 h-96 w-96 rounded-full bg-orange-300 opacity-30 blur-3xl dark:bg-orange-700/20 animate-pulse" />
-                <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-amber-200 opacity-25 blur-3xl dark:bg-orange-900/20 animate-pulse" style={{ animationDelay: '1s' }} />
-            </div>
-
-            <nav className="relative z-10 border-b border-orange-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black">
+            {/* Modern Navbar - Single, Sleek Design */}
+            <nav className="sticky top-0 z-50 backdrop-blur-xl bg-gray-900/80 border-b border-gray-800/50 shadow-xl">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
-                        <div className="flex">
-                            <div className="flex shrink-0 items-center">
-                                <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-black dark:text-white" />
-                                </Link>
-                            </div>
+                    <div className="flex h-14 items-center justify-between">
+                        {/* Left: Logo + Nav Links */}
+                        <div className="flex items-center gap-8">
+                            <Link href="/" className="flex items-center gap-2 group">
+                                <ApplicationLogo className="h-8 w-auto fill-current text-gold transition-transform group-hover:scale-105" />
+                                <span className="hidden sm:block text-lg font-bold text-white">GlobalHoops</span>
+                            </Link>
 
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                            <div className="hidden md:flex items-center gap-1">
                                 <NavLink
                                     href={route('inicio')}
                                     active={route().current('inicio')}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                                 >
                                     Home
+                                </NavLink>
+                                <NavLink
+                                    href={route('teams.index')}
+                                    active={route().current('teams.index')}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                >
+                                    Teams
+                                </NavLink>
+                                <NavLink
+                                    href={route('teams.feed')}
+                                    active={route().current('teams.feed')}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                >
+                                    My Feed
                                 </NavLink>
                             </div>
                         </div>
 
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
-                            <div className="relative ms-3">
+                        {/* Right: User Menu */}
+                        <div className="flex items-center gap-3">
+                            {/* User Info - Desktop */}
+                            <div className="hidden md:flex items-center gap-3">
+                                <div className="text-right">
+                                    <div className="text-sm font-medium text-white">{user.name}</div>
+                                    <div className="text-xs text-gray-400">{user.email}</div>
+                                </div>
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium leading-4 text-black dark:text-gray-300 transition duration-150 ease-in-out hover:text-[#FF2D20] focus:outline-none"
-                                            >
-                                                {user.name}
-
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
+                                        <button className="flex items-center justify-center w-9 h-9 rounded-full bg-gold/10 border border-gold/30 text-gold font-bold text-sm hover:bg-gold/20 transition-colors">
+                                            {user.name.charAt(0).toUpperCase()}
+                                        </button>
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                        >
-                                            Profile
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                        >
+                                        <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
+                                        <Dropdown.Link href={route('logout')} method="post" as="button">
                                             Log Out
                                         </Dropdown.Link>
                                     </Dropdown.Content>
                                 </Dropdown>
                             </div>
-                        </div>
 
-                        <div className="-me-2 flex items-center sm:hidden">
+                            {/* Mobile Menu Button */}
                             <button
-                                onClick={() =>
-                                    setShowingNavigationDropdown(
-                                        (previousState) => !previousState,
-                                    )
-                                }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-500 dark:hover:text-gray-300 focus:bg-gray-100 dark:focus:bg-gray-700 focus:text-gray-500 dark:focus:text-gray-300 focus:outline-none"
+                                onClick={() => setShowingNavigationDropdown((p) => !p)}
+                                className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/50 text-gray-300 hover:bg-gray-800 transition-colors"
                             >
-                                <svg
-                                    className="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
+                                <svg className="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                     <path
-                                        className={
-                                            !showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
+                                        className={!showingNavigationDropdown ? 'block' : 'hidden'}
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         strokeWidth="2"
                                         d="M4 6h16M4 12h16M4 18h16"
                                     />
                                     <path
-                                        className={
-                                            showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
+                                        className={showingNavigationDropdown ? 'block' : 'hidden'}
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         strokeWidth="2"
@@ -127,56 +99,36 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </div>
 
-                <div
-                    className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
-                    }
-                >
-                    <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('inicio')}
-                            active={route().current('inicio')}
-                        >
-                            Home
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <div className="border-t border-gray-200 dark:border-gray-600 pb-1 pt-4">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-gray-800 dark:text-gray-200">
-                                {user.name}
+                {/* Mobile Menu Dropdown */}
+                {showingNavigationDropdown && (
+                    <div className="md:hidden border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-xl">
+                        <div className="px-4 py-3 space-y-1">
+                            <div className="px-3 py-2 mb-2 border-b border-gray-800/50">
+                                <div className="text-sm font-medium text-white">{user.name}</div>
+                                <div className="text-xs text-gray-400">{user.email}</div>
                             </div>
-                            <div className="text-sm font-medium text-gray-500">
-                                {user.email}
-                            </div>
-                        </div>
-
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
+                            <ResponsiveNavLink href={route('inicio')} active={route().current('inicio')}>
+                                Home
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink href={route('teams.index')} active={route().current('teams.index')}>
+                                Teams
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink href={route('teams.feed')} active={route().current('teams.feed')}>
+                                My Feed
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink href={route('profile.edit')} active={route().current('profile.edit')}>
                                 Profile
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                method="post"
-                                href={route('logout')}
-                                as="button"
-                            >
+                            <ResponsiveNavLink href={route('logout')} method="post" as="button">
                                 Log Out
                             </ResponsiveNavLink>
                         </div>
                     </div>
-                </div>
+                )}
             </nav>
 
-                        {header && (
-                <header className="relative z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm shadow">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                        {header}
-                    </div>
-                </header>
-            )}
-
-            <main className="relative z-10">{children}</main>
+            {/* Page Content */}
+            <main>{children}</main>
         </div>
     );
 }

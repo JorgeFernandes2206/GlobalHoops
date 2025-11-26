@@ -9,10 +9,10 @@ export default function GameCard({ game, isLive = false }) {
         <Link href={`/games/${game.league?.id || 'nba'}/${game.id}`}>
             <motion.div
                 whileHover={{ scale: 1.03, y: -4 }}
-                className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-5 shadow-lg border border-gray-700/50 hover:border-[#FF2D20]/50 transition-all duration-300 cursor-pointer"
+                className="group relative overflow-hidden rounded-2xl bg-[linear-gradient(180deg,#081014_0%,#0f1820_100%)] p-5 shadow-lg border border-[rgba(255,255,255,0.04)] hover:border-[rgba(212,175,55,0.12)] transition-all duration-300 cursor-pointer"
             >
                 {/* Glow Effect on Hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FF2D20]/0 to-orange-600/0 group-hover:from-[#FF2D20]/5 group-hover:to-orange-600/5 transition-all duration-300" />
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(212,175,55,0),rgba(43,55,72,0))] group-hover:from-[rgba(212,175,55,0.05)] group-hover:to-[rgba(43,55,72,0.04)] transition-all duration-300" />
 
                 {/* Content */}
                 <div className="relative">
@@ -22,8 +22,8 @@ export default function GameCard({ game, isLive = false }) {
                             {league?.name || 'NBA'}
                         </span>
                         {isLive && (
-                            <span className="flex items-center gap-1.5 text-xs font-bold text-[#FF2D20] bg-[#FF2D20]/10 px-3 py-1 rounded-full">
-                                <span className="h-1.5 w-1.5 rounded-full bg-[#FF2D20] animate-pulse"></span>
+                            <span className="flex items-center gap-1.5 text-xs font-bold text-gold bg-[rgba(212,175,55,0.08)] px-3 py-1 rounded-full">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[rgba(212,175,55,0.9)] animate-pulse"></span>
                                 LIVE
                             </span>
                         )}
@@ -36,7 +36,7 @@ export default function GameCard({ game, isLive = false }) {
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                                 {teams?.home?.logo && (
                                     <div className="relative flex-shrink-0">
-                                        <div className="absolute inset-0 bg-[#FF2D20]/20 rounded-lg blur-md opacity-0 group-hover/team:opacity-100 transition" />
+                                        <div className="absolute inset-0 bg-[rgba(212,175,55,0.06)] rounded-lg blur-md opacity-0 group-hover/team:opacity-100 transition" />
                                         <img
                                             src={teams.home.logo}
                                             alt={teams.home.name}
@@ -45,7 +45,7 @@ export default function GameCard({ game, isLive = false }) {
                                         />
                                     </div>
                                 )}
-                                <span className="font-bold text-white truncate group-hover:text-[#FF2D20] transition-colors">
+                                <span className="font-bold text-white truncate group-hover:text-gold transition-colors">
                                     {teams?.home?.name || 'Home'}
                                 </span>
                             </div>
@@ -59,7 +59,7 @@ export default function GameCard({ game, isLive = false }) {
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                                 {teams?.away?.logo && (
                                     <div className="relative flex-shrink-0">
-                                        <div className="absolute inset-0 bg-[#FF2D20]/20 rounded-lg blur-md opacity-0 group-hover/team:opacity-100 transition" />
+                                        <div className="absolute inset-0 bg-[rgba(212,175,55,0.06)] rounded-lg blur-md opacity-0 group-hover/team:opacity-100 transition" />
                                         <img
                                             src={teams.away.logo}
                                             alt={teams.away.name}
@@ -68,7 +68,7 @@ export default function GameCard({ game, isLive = false }) {
                                         />
                                     </div>
                                 )}
-                                <span className="font-bold text-white truncate group-hover:text-[#FF2D20] transition-colors">
+                                <span className="font-bold text-white truncate group-hover:text-gold transition-colors">
                                     {teams?.away?.name || 'Away'}
                                 </span>
                             </div>
@@ -83,7 +83,7 @@ export default function GameCard({ game, isLive = false }) {
                         <p className="text-xs font-medium text-gray-400">
                             {status?.long || 'Scheduled'}
                         </p>
-                        <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[#FF2D20] group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gold group-hover:translate-x-1 transition-all" />
                     </div>
                 </div>
             </motion.div>

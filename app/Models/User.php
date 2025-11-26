@@ -45,4 +45,28 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the team followers records
+     */
+    public function teamFollowers()
+    {
+        return $this->hasMany(TeamFollower::class);
+    }
+
+    /**
+     * Check if user follows a specific team by API ID
+     */
+    public function followsTeam($teamApiId): bool
+    {
+        return $this->teamFollowers()->where('team_api_id', $teamApiId)->exists();
+    }
+
+    /**
+     * Get list of followed team API IDs
+     */
+    public function followedTeamIds(): array
+    {
+        return $this->teamFollowers()->pluck('team_api_id')->toArray();
+    }
 }

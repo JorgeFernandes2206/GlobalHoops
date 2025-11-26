@@ -16,12 +16,12 @@ export default function UpcomingGamesList({ games }) {
 
     if (!games || games.length === 0) {
         return (
-            <div className="relative group overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900/80 via-gray-800/80 to-gray-900/80 backdrop-blur-2xl p-8 border border-gray-700/50 shadow-2xl h-full">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5" />
+            <div className="relative group overflow-hidden rounded-3xl bg-[rgba(255,255,255,0.03)] p-8 border border-[rgba(255,255,255,0.04)] shadow-glass h-full">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(212,175,55,0.04),transparent)]" />
                 <div className="relative">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2.5 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg shadow-blue-500/30">
-                            <Calendar className="w-5 h-5 text-white" />
+                        <div className="p-2.5 rounded-xl bg-[rgba(212,175,55,0.08)] shadow-sm">
+                            <Calendar className="w-5 h-5 text-gold" />
                         </div>
                         <div>
                             <h3 className="text-2xl font-black text-white tracking-tight">Upcoming Games</h3>
@@ -42,8 +42,8 @@ export default function UpcomingGamesList({ games }) {
     return (
         <div className="relative group overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900/80 via-gray-800/80 to-gray-900/80 backdrop-blur-2xl p-8 border border-gray-700/50 shadow-2xl h-full">
             {/* Animated Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-            <div className="absolute inset-0 shadow-inner shadow-blue-500/10" />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-[radial-gradient(circle_at_0%_0%,rgba(212,175,55,0.03),transparent)]" />
+            <div className="absolute inset-0 shadow-inner" />
 
             <div className="relative">
                 {/* Header */}
@@ -121,7 +121,7 @@ export default function UpcomingGamesList({ games }) {
                                             </div>
 
                                             {/* Arrow */}
-                                            <ChevronRight className="w-5 h-5 text-gray-600 group-hover/item:text-blue-400 group-hover/item:translate-x-1 transition-all flex-shrink-0 ml-3" />
+                                                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:item:text-gold group-hover:item:translate-x-1 transition-all flex-shrink-0 ml-3" />
                                         </div>
 
                                         {/* Date and Time */}
@@ -129,13 +129,13 @@ export default function UpcomingGamesList({ games }) {
                                             {gameDate ? (
                                                 <>
                                                     <div className="flex items-center gap-2 text-gray-400">
-                                                        <Calendar className="w-4 h-4 text-blue-400" />
+                                                            <Calendar className="w-4 h-4 text-gold" />
                                                         <span className="text-xs font-semibold">
                                                             {gameDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-2 text-gray-400">
-                                                        <Clock className="w-4 h-4 text-blue-400" />
+                                                            <Clock className="w-4 h-4 text-gold" />
                                                         <span className="text-xs font-semibold">
                                                             {gameDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                                         </span>

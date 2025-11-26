@@ -638,6 +638,72 @@ class BasketballApiService
         });
     }
 
+    // Get news for specific teams
+    public function getTeamsNews(array $teamIds, string $league = 'nba', int $limit = 20)
+    {
+        $cacheKey = "team_news_" . md5(implode(',', $teamIds)) . "_{$league}_{$limit}";
+
+        return Cache::remember($cacheKey, 900, function () use ($teamIds, $league, $limit) {
+            $allNews = [];
+
+            // Fetch general league news
+            $data = $this->makeRequest($league, 'news');
+
+            if ($data && isset($data['articles'])) {
+                foreach ($data['articles'] as $article) {
+                    // Check if article mentions any of the followed teams
+                    $relevantTeams = [];
+                    $headline = strtolower($article['headline'] ?? '');
+                    $description = strtolower($article['description'] ?? '');
+
+                    foreach ($teamIds as $teamId) {
+                        // Get team info to match by name
+                        $teamData = $this->getTeam($league, $teamId);
+                        if ($teamData && isset($teamData['response'])) {
+                            $team = $teamData['response'];
+                            $teamName = strtolower($team['name']);
+                            $teamAbbr = strtolower($team['abbreviation']);
+
+                            // Check if team is mentioned in headline or description
+                            if (str_contains($headline, $teamName) ||
+                                str_contains($headline, $teamAbbr) ||
+                                str_contains($description, $teamName) ||
+                                str_contains($description, $teamAbbr)) {
+                                $relevantTeams[] = [
+                                    'id' => $team['id'],
+                                    'name' => $team['name'],
+                                    'logo' => $team['logo'],
+                                ];
+                            }
+                        }
+                    }
+
+                    // Only include articles that mention followed teams
+                    if (!empty($relevantTeams)) {
+                        $allNews[] = [
+                            'id' => $article['id'] ?? uniqid(),
+                            'type' => 'news',
+                            'headline' => $article['headline'] ?? 'No headline',
+                            'description' => $article['description'] ?? '',
+                            'published' => $article['published'] ?? now()->toIso8601String(),
+                            'link' => $article['links']['web']['href'] ?? '#',
+                            'image' => $article['images'][0]['url'] ?? null,
+                            'teams' => $relevantTeams,
+                            'league' => $this->leagues[$league] ?? strtoupper($league),
+                        ];
+                    }
+                }
+            }
+
+            // Sort by publication date (most recent first)
+            usort($allNews, function($a, $b) {
+                return strtotime($b['published']) - strtotime($a['published']);
+            });
+
+            return array_slice($allNews, 0, $limit);
+        });
+    }
+
     // Formatar jogo da ESPN para o formato esperado
     private function formatGame($event, $league)
     {

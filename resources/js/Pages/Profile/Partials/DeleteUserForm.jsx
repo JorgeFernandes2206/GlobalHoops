@@ -26,11 +26,11 @@ export default function DeleteUserForm({ className = '' }) {
 
     return (
         <section className={`space-y-6 ${className}`}>
-            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4">
+            <div className="bg-white/10 border border-white/30 rounded-lg p-4">
                 <h2 className="text-lg font-medium text-white"> Delete Account</h2>
                 <p className="mt-1 text-sm text-gray-400">Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.</p>
             </div>
-            <button onClick={confirmUserDeletion} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105">Delete Account</button>
+            <button onClick={confirmUserDeletion} className="px-6 py-2.5 bg-white hover:bg-gray-200 text-black font-semibold rounded-lg transition-all duration-300 transform hover:scale-105">Delete Account</button>
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
                 <form onSubmit={deleteUser} className="p-6">
                     <h2 className="text-lg font-medium text-gray-900">Are you sure you want to delete your account?</h2>
@@ -42,7 +42,7 @@ export default function DeleteUserForm({ className = '' }) {
                     </div>
                     <div className="mt-6 flex justify-end gap-3">
                         <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
-                        <button type="submit" disabled={processing} className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-all">Delete Account</button>
+                        <button type="submit" disabled={processing} className="px-4 py-2 bg-white hover:bg-gray-200 disabled:bg-gray-600 text-black font-semibold rounded-lg transition-all">Delete Account</button>
                     </div>
                 </form>
             </Modal>

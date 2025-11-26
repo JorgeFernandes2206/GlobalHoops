@@ -57,35 +57,36 @@ export default function PlayerShow({ auth, player, league }) {
         >
             <Head title={`${info.name} - Stats`} />
 
-            <div className="py-8">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
                     {/* Hero Card com Info do Jogador */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800 via-gray-900 to-black border border-gray-700"
+                        className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#FF2D20]/10 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-gold/5 to-transparent" />
                         <div className="relative p-8">
                             <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
                                 {/* Avatar/Imagem */}
                                 <div className="relative">
                                     {info.image ? (
                                         <div className="relative">
-                                            <div className="absolute inset-0 bg-gradient-to-br from-[#FF2D20] to-orange-600 rounded-full blur-xl opacity-50" />
-                                            <img
-                                                src={info.image}
-                                                alt={info.name}
-                                                className="relative w-40 h-40 rounded-full object-cover ring-4 ring-[#FF2D20]/30 shadow-2xl"
-                                            />
+                                            <div className="w-32 h-32 rounded-2xl bg-gray-900/50 border border-gray-700/30 p-3 backdrop-blur-sm">
+                                                <img
+                                                    src={info.image}
+                                                    alt={info.name}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="w-40 h-40 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-5xl font-bold text-white ring-4 ring-gray-700">
+                                        <div className="w-32 h-32 rounded-2xl bg-gray-900/50 border border-gray-700/30 flex items-center justify-center text-4xl font-bold text-white">
                                             {info.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                         </div>
                                     )}
                                     {info.jersey && (
-                                        <div className="absolute -bottom-2 -right-2 bg-[#FF2D20] text-white font-bold text-xl px-4 py-2 rounded-full shadow-lg">
+                                        <div className="absolute -bottom-2 -right-2 bg-gold text-black font-bold text-lg px-3 py-1.5 rounded-xl shadow-lg">
                                             #{info.jersey}
                                         </div>
                                     )}
@@ -93,15 +94,15 @@ export default function PlayerShow({ auth, player, league }) {
 
                                 {/* Info Principal */}
                                 <div className="flex-1 text-center md:text-left">
-                                    <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-3">
-                                        <span className="px-4 py-1.5 bg-[#FF2D20]/20 text-[#FF2D20] font-bold text-sm rounded-full border border-[#FF2D20]/30">
+                                    <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+                                        <span className="px-4 py-1.5 bg-gold/10 text-gold font-bold text-sm rounded-full border border-gold/30">
                                             {info.position}
                                         </span>
-                                        <span className="px-4 py-1.5 bg-gray-700/50 text-gray-300 font-medium text-sm rounded-full">
+                                        <span className="px-4 py-1.5 bg-gray-700/30 text-gray-300 font-medium text-sm rounded-full border border-gray-600/30">
                                             {league.toUpperCase()}
                                         </span>
                                     </div>
-                                    <h1 className="text-5xl font-bold text-white mb-3 tracking-tight">{info.name}</h1>
+                                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">{info.name}</h1>
                                     <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
                                         {info.teamLogo && (
                                             <img src={info.teamLogo} alt={info.team} className="w-10 h-10 drop-shadow-lg" />
@@ -125,13 +126,11 @@ export default function PlayerShow({ auth, player, league }) {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.1 + index * 0.05 }}
-                                className="relative group"
+                                className="group"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition rounded-2xl blur-xl" 
-                                     style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }} />
-                                <div className="relative bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-gray-600 transition text-center group-hover:transform group-hover:scale-105 duration-300">
-                                    <p className="text-gray-400 text-sm font-medium mb-2">{stat.label}</p>
-                                    <p className="text-4xl font-bold bg-gradient-to-br from-[#FF2D20] to-orange-500 bg-clip-text text-transparent mb-1">
+                                <div className="relative rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6 text-center hover:border-gold/30 transition-all duration-300">
+                                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wide mb-2">{stat.label}</p>
+                                    <p className="text-4xl font-black text-gold mb-1">
                                         {stat.value}
                                     </p>
                                     <p className="text-xs text-gray-500">Total: {stat.total}</p>
@@ -149,14 +148,14 @@ export default function PlayerShow({ auth, player, league }) {
                             transition={{ delay: 0.3 }}
                             className="lg:col-span-1"
                         >
-                            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 h-full">
+                            <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6 h-full">
                                 <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                                    <TrendingUp className="w-5 h-5 text-[#FF2D20]" />
+                                    <TrendingUp className="w-5 h-5 text-gold" />
                                     Additional Stats
                                 </h2>
-                                <div className="space-y-3">
+                                <div className="space-y-2">
                                     {additionalStats.map(([stat, value]) => (
-                                        <div key={stat} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition">
+                                        <div key={stat} className="flex items-center justify-between p-3 bg-gray-900/30 rounded-xl border border-gray-700/30 hover:border-gold/30 transition">
                                             <span className="text-gray-400 text-sm font-medium">{stat}</span>
                                             <span className="text-white text-lg font-bold">{value}</span>
                                         </div>
@@ -173,9 +172,9 @@ export default function PlayerShow({ auth, player, league }) {
                                 transition={{ delay: 0.3 }}
                                 className="lg:col-span-2"
                             >
-                                <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+                                <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6">
                                     <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                                        <Calendar className="w-5 h-5 text-[#FF2D20]" />
+                                        <Calendar className="w-5 h-5 text-gold" />
                                         Recent Performances
                                     </h2>
                                     <div className="space-y-3">
@@ -185,7 +184,7 @@ export default function PlayerShow({ auth, player, league }) {
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: 0.4 + index * 0.05 }}
-                                                className="bg-gray-700/30 rounded-xl p-4 hover:bg-gray-700/50 transition border border-gray-700/50"
+                                                className="bg-gray-900/50 rounded-2xl p-4 hover:bg-gray-900/70 transition border border-gray-700/30 hover:border-gold/30"
                                             >
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div>
@@ -200,10 +199,10 @@ export default function PlayerShow({ auth, player, league }) {
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-3xl font-bold text-[#FF2D20]">
+                                                        <p className="text-3xl font-bold text-gold">
                                                             {game.stats.PTS || 0}
                                                         </p>
-                                                        <p className="text-xs text-gray-400">POINTS</p>
+                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">Points</p>
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">

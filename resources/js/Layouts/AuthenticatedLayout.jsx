@@ -46,6 +46,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     My Feed
                                 </NavLink>
+                                <NavLink
+                                    href={route('forum.index')}
+                                    active={route().current('forum.*')}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                >
+                                    Forum
+                                </NavLink>
                             </div>
                         </div>
 

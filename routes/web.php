@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\TopicController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +35,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/teams/follow', [App\Http\Controllers\TeamFollowerController::class, 'follow'])->name('teams.follow');
     Route::post('/teams/unfollow', [App\Http\Controllers\TeamFollowerController::class, 'unfollow'])->name('teams.unfollow');
     Route::post('/teams/notifications', [App\Http\Controllers\TeamFollowerController::class, 'toggleNotifications'])->name('teams.notifications');
+
+    // Push Notification Routes
+    Route::post('/push/subscribe', [App\Http\Controllers\PushSubscriptionController::class, 'subscribe'])->name('push.subscribe');
+    Route::post('/push/unsubscribe', [App\Http\Controllers\PushSubscriptionController::class, 'unsubscribe'])->name('push.unsubscribe');
+    Route::get('/push/vapid-public-key', [App\Http\Controllers\PushSubscriptionController::class, 'vapidPublicKey'])->name('push.vapid');
 });
 
 
@@ -73,5 +79,21 @@ Route::get('/players/{league}/{playerId}', [App\Http\Controllers\PlayerControlle
 
 // Página pública do jogo (frontend) - renderiza a página Inertia com detalhes do jogo
 Route::get('/games/{league}/{id}', [GameController::class, 'page'])->middleware(['auth'])->name('games.show');
+
+// Forum routes
+Route::prefix('forum')->name('forum.')->group(function () {
+    Route::get('/', [TopicController::class, 'index'])->name('index');
+    Route::get('/create', [TopicController::class, 'create'])->middleware('auth')->name('create');
+    Route::post('/', [TopicController::class, 'store'])->middleware('auth')->name('store');
+    Route::get('/{id}', [TopicController::class, 'show'])->name('show');
+    Route::delete('/{id}', [TopicController::class, 'destroy'])->middleware('auth')->name('destroy');
+});
+
+// Comments routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/comments', [App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
+    Route::delete('/comments/{comment}', [App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::get('/comments', [App\Http\Controllers\CommentController::class, 'index'])->name('comments.index');
+});
 
 require __DIR__.'/auth.php';

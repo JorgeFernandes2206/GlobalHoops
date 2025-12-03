@@ -4,8 +4,9 @@ import { ArrowLeft, MapPin, Users, Calendar, Trophy, TrendingUp } from 'lucide-r
 import { useState } from 'react';
 import HeroGame from '@/Components/Dashboard/HeroGame';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CommentSection from '@/Components/CommentSection';
 
-export default function Show({ auth, game, league, injuriesHome = [], injuriesAway = [], recentHome = [], recentAway = [], headToHead = [], standings = null, odds = null }) {
+export default function Show({ auth, game, league, injuriesHome = [], injuriesAway = [], recentHome = [], recentAway = [], headToHead = [], standings = null, odds = null, comments = [] }) {
     const [activeTab, setActiveTab] = useState('boxscore'); // boxscore, stats, leaders
 
     const header = game?.header || {};
@@ -834,6 +835,20 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                             <p className="text-sm text-gray-500 mt-2">Check back once the game has started</p>
                         </motion.div>
                     )}
+
+                    {/* Comments Section */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-8"
+                    >
+                        <CommentSection 
+                            commentableType="Game"
+                            commentableId={`${league}_${game?.header?.id || ''}`}
+                            initialComments={comments || []}
+                        />
+                    </motion.div>
                 </div>
             </div>
         </AuthenticatedLayout>

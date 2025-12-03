@@ -1,8 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function Following({ teams }) {
+    const { isSupported, isSubscribed, isLoading, subscribe, unsubscribe } = usePushNotifications();
+
     const handleUnfollow = (teamId) => {
         if (confirm('Are you sure you want to unfollow this team?')) {
             router.post(route('teams.unfollow'), {
@@ -21,6 +24,14 @@ export default function Following({ teams }) {
         });
     };
 
+    const handlePushToggle = async () => {
+        if (isSubscribed) {
+            await unsubscribe();
+        } else {
+            await subscribe();
+        }
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="Following Teams" />
@@ -33,11 +44,29 @@ export default function Following({ teams }) {
                         animate={{ opacity: 1, y: 0 }}
                         className="mb-8"
                     >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
                             <div>
                                 <h1 className="text-3xl font-bold text-white mb-2">Teams You Follow</h1>
                                 <p className="text-gray-400">Manage your followed teams and notifications</p>
                             </div>
+
+                            {/* Push Notifications Toggle */}
+                            {isSupported && (
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={handlePushToggle}
+                                    disabled={isLoading}
+                                    className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${
+                                        isSubscribed
+                                            ? 'bg-green-500/20 border-2 border-green-500 text-green-400'
+                                            : 'bg-white text-black hover:bg-gray-200'
+                                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <span className="text-xl">{isSubscribed ? '🔔' : '🔕'}</span>
+                                    {isLoading ? 'A processar...' : (isSubscribed ? 'Notificações Push Ativas' : 'Ativar Notificações Push')}
+                                </motion.button>
+                            )}
                             <Link
                                 href={route('teams.feed')}
                                 className="px-4 py-2 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition"

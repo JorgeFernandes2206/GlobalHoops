@@ -69,4 +69,12 @@ class User extends Authenticatable
     {
         return $this->teamFollowers()->pluck('team_api_id')->toArray();
     }
+
+    /**
+     * Get push subscriptions
+     */
+    public function pushSubscriptions()
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
 }

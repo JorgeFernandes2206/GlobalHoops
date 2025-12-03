@@ -123,10 +123,20 @@ class GameController extends Controller
             // Non-fatal
         }
 
+        // Get comments for this game (with replies loaded efficiently)
+        $comments = \App\Models\Comment::where('commentable_type', 'Game')
+            ->where('commentable_id', "{$league}_{$id}")
+            ->topLevel()
+            ->with(['replies.user', 'replies.replies.user']) // Limit depth to 2 levels
+            ->latest()
+            ->limit(50) // Limit to 50 top-level comments
+            ->get();
+
         return Inertia::render('Game/Show', array_merge([
             'game' => $gameData ?? [],
             'league' => $league,
             'gameId' => $id,
+            'comments' => $comments,
         ], $extras));
     }
 }

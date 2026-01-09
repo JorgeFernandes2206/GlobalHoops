@@ -361,7 +361,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                         </div>
 
                         <div className="p-6">
-                            {/* Tab: Boxscore (Estatísticas dos Jogadores) */}
+                            {/* Tab: Boxscore (Player Statistics) */}
                             {activeTab === 'boxscore' && (
                                 <div className="space-y-8">
                                     {awayBoxscore?.statistics?.[0]?.athletes && (
@@ -528,7 +528,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                 <table className="w-full">
                                                     <thead className="bg-gray-700/30">
                                                         <tr>
-                                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Jogador</th>
+                                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Player</th>
                                                             <th className="px-3 py-3 text-center text-xs font-medium text-gray-400 uppercase">MIN</th>
                                                             <th className="px-3 py-3 text-center text-xs font-medium text-gray-400 uppercase">PTS</th>
                                                             <th className="px-3 py-3 text-center text-xs font-medium text-gray-400 uppercase">REB</th>

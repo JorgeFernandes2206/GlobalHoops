@@ -52,7 +52,7 @@ export default function NewsSection({ news = [] }) {
 
                 {/* News Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {news.map((article, index) => (
+                    {(news || []).slice(0, 2).map((article, index) => (
                         <motion.a
                             key={article.id || index}
                             href={article.link}
@@ -77,6 +77,7 @@ export default function NewsSection({ news = [] }) {
                                         <img
                                             src={article.image}
                                             alt={article.headline}
+                                            loading="lazy"
                                             className="w-full h-full object-cover group-hover/article:scale-110 transition-transform duration-700"
                                         />
 
@@ -133,6 +134,21 @@ export default function NewsSection({ news = [] }) {
                         </motion.a>
                     ))}
                 </div>
+
+                {/* View All Link */}
+                {news && news.length > 2 && (
+                    <div className="mt-6 text-center">
+                        <Link
+                            href={route('news.index')}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-sm rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
+                        >
+                            <span>View All News</span>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     );

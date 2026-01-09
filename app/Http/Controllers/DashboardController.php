@@ -26,14 +26,14 @@ class DashboardController extends Controller
         // Buscar jogos ao vivo de todas as ligas
         $liveGames = $basketballApi->getLiveGames();
 
-        // Buscar próximos jogos (próximos 3 dias para velocidade)
-        $upcomingGames = $basketballApi->getUpcomingGames(3);
+        // Buscar próximos jogos (apenas 1 dia para dashboard, página dedicada tem mais)
+        $upcomingGames = $basketballApi->getUpcomingGames(1);
 
-        // Buscar jogos finalizados (últimos 3 dias para velocidade)
-        $finishedGames = $basketballApi->getFinishedGames(3);
+        // Buscar jogos finalizados (apenas 1 dia para dashboard)
+        $finishedGames = $basketballApi->getFinishedGames(1);
 
-        // Buscar últimas notícias (top 5)
-        $news = $basketballApi->getNews(null, 5);
+        // Buscar últimas notícias (apenas 2 para dashboard)
+        $news = $basketballApi->getNews(null, 2);
 
         // Ligas disponíveis
         $leagues = $basketballApi->getLeagues();
@@ -41,25 +41,13 @@ class DashboardController extends Controller
         // Notificações do utilizador
         $notifications = [];
 
-        // Try to compute top players server-side to avoid empty client state.
-        // If the aggregation process times out or fails, catch the exception,
-        // log it and continue gracefully with an empty array.
+        // Try to compute top players with shorter window for faster loading
         $topPlayers = [];
         try {
-            $topPlayers = $this->basketballApi->getTopPlayersWeek('nba', 7, 6);
-            if (empty($topPlayers) || (is_array($topPlayers) && count($topPlayers) === 0)) {
-                // Try 30 days
-                $topPlayers = $this->basketballApi->getTopPlayersWeek('nba', 30, 6);
-            }
-            if (empty($topPlayers) || (is_array($topPlayers) && count($topPlayers) === 0)) {
-                // Try full season / larger window
-                $topPlayers = $this->basketballApi->getTopPlayersWeek('nba', 180, 6);
-            }
+            // Request 10 players to get 5 NBA + 5 Euroleague balanced mix
+            $topPlayers = $this->basketballApi->getTopPlayersWeek('all', 7, 10);
         } catch (\Throwable $e) {
-            // Log the error for debugging and fall back to empty data so the page still loads.
-            Log::error('Failed to compute top players for dashboard: ' . $e->getMessage(), [
-                'exception' => $e,
-            ]);
+            Log::error('Failed to compute top players for dashboard: ' . $e->getMessage());
             $topPlayers = [];
         }
 

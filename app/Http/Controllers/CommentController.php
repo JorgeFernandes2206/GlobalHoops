@@ -20,7 +20,7 @@ class CommentController extends Controller
 
         $validated = $request->validate([
             'commentable_type' => 'required|string',
-            'commentable_id' => 'required|string',
+            'commentable_id' => 'required', // Can be string or integer
             'parent_id' => 'nullable|exists:comments,id',
             'content' => 'required|string|min:1|max:5000',
         ]);

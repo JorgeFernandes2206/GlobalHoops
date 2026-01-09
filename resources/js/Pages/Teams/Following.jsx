@@ -126,13 +126,19 @@ export default function Following({ teams }) {
 
                                     <div className="space-y-2 mb-4">
                                         <div className="flex items-center gap-2 text-sm">
-                                            <span className="text-gray-400">Conference:</span>
-                                            <span className="text-white font-medium">{team.conference}</span>
+                                            <span className="text-gray-400">League:</span>
+                                            <span className={`text-white font-bold px-2 py-0.5 rounded ${
+                                                team.league === 'NBA' ? 'bg-blue-500/20' : 'bg-orange-500/20'
+                                            }`}>
+                                                {team.league || 'NBA'}
+                                            </span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <span className="text-gray-400">Followers:</span>
-                                            <span className="text-white font-medium">{team.followers_count}</span>
-                                        </div>
+                                        {team.conference && (
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <span className="text-gray-400">Conference:</span>
+                                                <span className="text-white font-medium">{team.conference}</span>
+                                            </div>
+                                        )}
                                         <div className="flex items-center gap-2 text-sm">
                                             <span className="text-gray-400">Following since:</span>
                                             <span className="text-white font-medium">

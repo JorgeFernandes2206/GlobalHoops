@@ -23,6 +23,33 @@ class PlayerController extends Controller
         return response()->json($players);
     }
 
+    // GET /api/players/search?q=lebron - Pesquisar jogadores em todas as ligas
+    public function search(Request $request)
+    {
+        $query = $request->query('q', '');
+        
+        if (strlen($query) < 2) {
+            return response()->json([
+                'results' => [],
+                'message' => 'Query too short'
+            ]);
+        }
+
+        try {
+            $results = $this->basketballApi->searchPlayers($query);
+            return response()->json([
+                'results' => $results,
+                'query' => $query
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Player search error: ' . $e->getMessage());
+            return response()->json([
+                'results' => [],
+                'error' => 'Search failed'
+            ], 500);
+        }
+    }
+
     // GET /players/{league}/{playerId} - Página de detalhes do jogador
     public function show(string $league, string $playerId)
     {

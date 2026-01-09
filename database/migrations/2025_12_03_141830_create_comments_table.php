@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->morphs('commentable'); // commentable_id, commentable_type (Game, Team, etc)
+            $table->string('commentable_type'); // Type: Game, Topic, etc
+            $table->string('commentable_id'); // ID as string to support "nba_401810179" format for games
             $table->foreignId('parent_id')->nullable()->constrained('comments')->onDelete('cascade'); // Para replies
             $table->text('content');
             $table->timestamps();

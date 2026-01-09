@@ -3,19 +3,39 @@ import { Head, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
-export default function Index({ teams }) {
+export default function Index({ teams, selectedLeague, selectedCountry, availableLeagues, availableCountries }) {
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
+    const [league, setLeague] = useState(selectedLeague || 'nba');
+    const [country, setCountry] = useState(selectedCountry || null);
 
     const filteredTeams = teams.filter(team => {
         const matchesSearch = team.name.toLowerCase().includes(search.toLowerCase()) ||
-                            team.city?.toLowerCase().includes(search.toLowerCase());
+                            team.city?.toLowerCase().includes(search.toLowerCase()) ||
+                            team.country?.toLowerCase().includes(search.toLowerCase());
         const matchesFilter = filter === 'all' ||
                             (filter === 'following' && team.is_following) ||
                             (filter === 'east' && team.conference === 'East') ||
                             (filter === 'west' && team.conference === 'West');
         return matchesSearch && matchesFilter;
     });
+
+    const handleLeagueChange = (newLeague) => {
+        setLeague(newLeague);
+        setCountry(null);
+        router.get(route('teams.index'), { league: newLeague }, {
+            preserveScroll: false,
+            preserveState: false,
+        });
+    };
+    
+    const handleCountryChange = (newCountry) => {
+        setCountry(newCountry);
+        router.get(route('teams.index'), { league, country: newCountry }, {
+            preserveScroll: false,
+            preserveState: false,
+        });
+    };
 
     const handleFollow = (teamId) => {
         router.post(route('teams.follow'), {
@@ -55,6 +75,55 @@ export default function Index({ teams }) {
                         <h1 className="text-3xl font-bold text-white mb-2">Basketball Teams</h1>
                         <p className="text-gray-400">Follow your favorite teams and get instant updates</p>
                     </motion.div>
+
+                    {/* League Selector */}
+                    <div className="mb-6 flex gap-3">
+                        {availableLeagues?.map((l) => (
+                            <button
+                                key={l.id}
+                                onClick={() => handleLeagueChange(l.id)}
+                                className={`px-6 py-3 rounded-xl font-bold text-lg transition ${
+                                    league === l.id
+                                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/50'
+                                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                }`}
+                            >
+                                {l.name}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Country Filter (only for Europe) */}
+                    {league === 'euroleague' && availableCountries?.length > 0 && (
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Filter by Country:</label>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => handleCountryChange(null)}
+                                    className={`px-4 py-2 rounded-lg font-medium transition ${
+                                        !country
+                                            ? 'bg-white text-black'
+                                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                    }`}
+                                >
+                                    All Countries
+                                </button>
+                                {availableCountries.map((c) => (
+                                    <button
+                                        key={c}
+                                        onClick={() => handleCountryChange(c)}
+                                        className={`px-4 py-2 rounded-lg font-medium transition ${
+                                            country === c
+                                                ? 'bg-white text-black'
+                                                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                        }`}
+                                    >
+                                        {c}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Filters */}
                     <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -98,13 +167,23 @@ export default function Index({ teams }) {
                                             <img
                                                 src={team.logo_url}
                                                 alt={team.name}
-                                                className="w-12 h-12 rounded-lg object-cover"
+                                                className="w-12 h-12 rounded-lg object-contain bg-white/5 p-1"
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextElementSibling.style.display = 'flex';
+                                                }}
                                             />
-                                        ) : (
-                                            <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center text-2xl">
-                                                🏀
-                                            </div>
-                                        )}
+                                        ) : null}
+                                        <div 
+                                            className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold"
+                                            style={{ 
+                                                display: team.logo_url ? 'none' : 'flex',
+                                                backgroundColor: team.color ? `#${team.color}20` : 'rgba(255,255,255,0.1)',
+                                                color: team.color ? `#${team.color}` : 'white'
+                                            }}
+                                        >
+                                            {team.abbreviation || '🏀'}
+                                        </div>
                                         <div>
                                             <h3 className="text-lg font-bold text-white">{team.name}</h3>
                                             {team.city && (
@@ -115,28 +194,34 @@ export default function Index({ teams }) {
                                 </div>
 
                                 <div className="space-y-2 mb-4">
-                                    {team.conference && (
+                                    {team.league && (
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <span className="text-gray-400">League:</span>
+                                            <span className={`text-white font-bold px-2 py-0.5 rounded ${
+                                                team.league === 'NBA' ? 'bg-blue-500/20' : 'bg-orange-500/20'
+                                            }`}>
+                                                {team.league}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {team.country && league === 'euroleague' && (
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <span className="text-gray-400">Country:</span>
+                                            <span className="text-white font-medium">{team.country}</span>
+                                        </div>
+                                    )}
+                                    {team.conference && league === 'nba' && (
                                         <div className="flex items-center gap-2 text-sm">
                                             <span className="text-gray-400">Conference:</span>
                                             <span className="text-white font-medium">{team.conference}</span>
                                         </div>
                                     )}
-                                    {team.division && (
+                                    {team.division && league === 'nba' && (
                                         <div className="flex items-center gap-2 text-sm">
                                             <span className="text-gray-400">Division:</span>
                                             <span className="text-white font-medium">{team.division}</span>
                                         </div>
                                     )}
-                                    {team.arena && (
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <span className="text-gray-400">Arena:</span>
-                                            <span className="text-white font-medium">{team.arena}</span>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <span className="text-gray-400">Followers:</span>
-                                        <span className="text-white font-medium">{team.followers_count}</span>
-                                    </div>
                                 </div>
 
                                 <motion.button

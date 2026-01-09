@@ -2,6 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import PlayerSearchBar from '@/Components/PlayerSearchBar';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -33,18 +34,32 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Home
                                 </NavLink>
                                 <NavLink
+                                    href={route('games.index')}
+                                    active={route().current('games.index')}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                >
+                                    Games
+                                </NavLink>
+                                <NavLink
+                                    href={route('standings.index')}
+                                    active={route().current('standings.index')}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                >
+                                    Standings
+                                </NavLink>
+                                <NavLink
+                                    href={route('news.index')}
+                                    active={route().current('news.index')}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                >
+                                    News
+                                </NavLink>
+                                <NavLink
                                     href={route('teams.index')}
                                     active={route().current('teams.index')}
                                     className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                                 >
                                     Teams
-                                </NavLink>
-                                <NavLink
-                                    href={route('teams.feed')}
-                                    active={route().current('teams.feed')}
-                                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                                >
-                                    My Feed
                                 </NavLink>
                                 <NavLink
                                     href={route('forum.index')}
@@ -56,8 +71,13 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                         </div>
 
-                        {/* Right: User Menu */}
+                        {/* Right: Search + User Menu */}
                         <div className="flex items-center gap-3">
+                            {/* Search Bar - Desktop */}
+                            <div className="hidden lg:block w-64">
+                                <PlayerSearchBar />
+                            </div>
+
                             {/* User Info - Desktop */}
                             <div className="hidden md:flex items-center gap-3">
                                 <div className="text-right">
@@ -110,6 +130,11 @@ export default function AuthenticatedLayout({ header, children }) {
                 {showingNavigationDropdown && (
                     <div className="md:hidden border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-xl">
                         <div className="px-4 py-3 space-y-1">
+                            {/* Mobile Search */}
+                            <div className="mb-3">
+                                <PlayerSearchBar />
+                            </div>
+                            
                             <div className="px-3 py-2 mb-2 border-b border-gray-800/50">
                                 <div className="text-sm font-medium text-white">{user.name}</div>
                                 <div className="text-xs text-gray-400">{user.email}</div>
@@ -117,11 +142,20 @@ export default function AuthenticatedLayout({ header, children }) {
                             <ResponsiveNavLink href={route('inicio')} active={route().current('inicio')}>
                                 Home
                             </ResponsiveNavLink>
+                            <ResponsiveNavLink href={route('games.index')} active={route().current('games.index')}>
+                                Games
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink href={route('standings.index')} active={route().current('standings.index')}>
+                                Standings
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink href={route('news.index')} active={route().current('news.index')}>
+                                News
+                            </ResponsiveNavLink>
                             <ResponsiveNavLink href={route('teams.index')} active={route().current('teams.index')}>
                                 Teams
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink href={route('teams.feed')} active={route().current('teams.feed')}>
-                                My Feed
+                            <ResponsiveNavLink href={route('forum.index')} active={route().current('forum.*')}>
+                                Forum
                             </ResponsiveNavLink>
                             <ResponsiveNavLink href={route('profile.edit')} active={route().current('profile.edit')}>
                                 Profile

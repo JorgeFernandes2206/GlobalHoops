@@ -139,9 +139,9 @@ export default function PlayerShow({ auth, player, league }) {
                         ))}
                     </div>
 
-                    {/* Duas Colunas: Stats Adicionais & Jogos Recentes */}
+                    {/* Two Columns: Additional Stats & Recent Games */}
                     <div className="grid lg:grid-cols-3 gap-6">
-                        {/* Estatísticas Adicionais */}
+                        {/* Additional Statistics */}
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -164,7 +164,7 @@ export default function PlayerShow({ auth, player, league }) {
                             </div>
                         </motion.div>
 
-                        {/* Jogos Recentes */}
+                        {/* Recent Games */}
                         {recentGames && recentGames.length > 0 && (
                             <motion.div
                                 initial={{ opacity: 0, x: 20 }}

@@ -4,30 +4,24 @@ import { Activity } from 'lucide-react';
 export default function LiveGamesGrid({ games }) {
     if (!games || games.length === 0) {
         return (
-            <div className="rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-8 text-center border border-gray-700/50">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-800 border-2 border-gray-700 mb-4">
-                    <Activity className="w-8 h-8 text-gray-600" />
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900/80 via-gray-800/80 to-gray-900/80 backdrop-blur-sm p-12 text-center border border-white/5">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(239,68,68,0.1),transparent)]"></div>
+                <div className="relative">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-red-500/10 to-red-600/10 border border-red-500/20 mb-4">
+                        <Activity className="w-10 h-10 text-red-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">No Live Games</h3>
+                    <p className="text-gray-400">Check back soon for live action</p>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">No Live Games</h3>
-                <p className="text-gray-400">No games are currently in progress</p>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="flex items-center gap-3 mb-5">
-                <div className="flex items-center gap-2 px-4 py-2 bg-[#FF2D20]/10 rounded-full border border-[#FF2D20]/30">
-                    <span className="h-2 w-2 rounded-full bg-[#FF2D20] animate-pulse"></span>
-                    <h2 className="text-lg font-black text-[#FF2D20] uppercase tracking-wider">Live Games</h2>
-                </div>
-                <div className="flex-1 h-px bg-gradient-to-r from-gray-700 to-transparent"></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {games.slice(0, 6).map((game) => (
-                    <GameCard key={game.id} game={game} isLive={true} />
-                ))}
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {games.slice(0, 6).map((game) => (
+                <GameCard key={game.id} game={game} isLive={true} />
+            ))}
         </div>
     );
 }

@@ -36,6 +36,10 @@ class GameController extends Controller
     // Render Inertia page for a game detail (used by frontend link)
     public function page(string $league, string $id): InertiaResponse
     {
+        // Aumentar limites para evitar timeouts em jogos com muitos dados
+        set_time_limit(120); // 2 minutos
+        ini_set('memory_limit', '256M');
+        
         // Buscar informações completas do jogo via ESPN summary endpoint
         $gameData = $this->basketballApi->getGameSummary($league, $id);
         

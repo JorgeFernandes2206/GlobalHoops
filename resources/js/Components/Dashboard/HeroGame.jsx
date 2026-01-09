@@ -18,15 +18,24 @@ export default function HeroGame({ game }) {
         );
     }
 
-    const { teams, scores, status, league } = game;
+    const { teams, scores, status, league, date, time } = game;
 
-    // Determine live state robustly: status may be an object or string
+    // Determine live state robustly: check both status and if game time has actually started
     let isLive = false;
+    let gameStarted = false;
+    
     try {
-        if (status) {
+        // Check if game has actually started based on timestamp
+        if (date || time) {
+            const gameTime = new Date(date || time);
+            const now = new Date();
+            gameStarted = gameTime <= now;
+        }
+        
+        if (status && gameStarted) {
             if (typeof status === 'string') {
                 // some payloads send status as string like 'In Progress'
-                isLive = /in progress|in/i.test(status);
+                isLive = /in progress|live|playing/i.test(status);
             } else {
                 isLive = (status.type && status.type.state === 'in') || (status.state === 'in') || (status.status === 'in');
             }
@@ -51,32 +60,45 @@ export default function HeroGame({ game }) {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden rounded-3xl bg-[linear-gradient(180deg,#081014_0%,#0f1820_100%)] shadow-2xl"
+            className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl shadow-2xl border border-white/5"
         >
-            {/* Background Effects */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(212,175,55,0.10),transparent_50%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(43,55,72,0.06),transparent_50%)]" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            {/* Premium Background Effects */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(249,115,22,0.15),transparent_50%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(59,130,246,0.12),transparent_50%)]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
             
-            {/* Border Gradient */}
-            <div className="absolute inset-0 rounded-3xl p-[1px] bg-[linear-gradient(90deg,rgba(212,175,55,0.12),rgba(43,55,72,0.08))]" />
+            {/* Animated Gradient Border */}
+            <div className="absolute inset-0 rounded-2xl opacity-50">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-blue-500/20 to-purple-500/20 blur-xl animate-pulse"></div>
+            </div>
 
             <div className="relative p-8 md:p-12">
                 {/* Header */}
                 <div className="mb-8 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        {isLive && (
+                    <div className="flex items-center gap-4 flex-wrap">
+                        {isLive ? (
                             <motion.div
                                 animate={{ opacity: [1, 0.5, 1] }}
                                 transition={{ repeat: Infinity, duration: 2 }}
                                 className="relative"
                             >
-                                <div className="absolute inset-0 bg-[rgba(212,175,55,0.12)] rounded-full blur-lg opacity-40" />
-                                <div className="relative inline-flex items-center gap-2 rounded-full bg-[rgba(212,175,55,0.10)] px-5 py-2.5 shadow-lg">
+                                <div className="absolute inset-0 bg-red-500/20 rounded-full blur-lg opacity-40" />
+                                <div className="relative inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-red-500/90 to-red-600/90 px-5 py-2.5 shadow-lg">
                                     <span className="h-2.5 w-2.5 rounded-full bg-white animate-pulse"></span>
                                     <span className="text-sm font-black text-white tracking-wider">LIVE NOW</span>
                                 </div>
                             </motion.div>
+                        ) : (date || time) && (
+                            <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-5 py-2.5 border border-blue-500/30">
+                                <span className="text-sm font-bold text-blue-400">
+                                    {new Date(date || time).toLocaleDateString('en-US', { 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </span>
+                            </div>
                         )}
                         <span className="px-4 py-2 rounded-full bg-white/10 backdrop-blur text-sm font-semibold text-gray-300 border border-white/20">
                             {league?.name || 'NBA'}

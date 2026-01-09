@@ -53,8 +53,8 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     Route::post('/favorites', [FavoriteController::class, 'store']);
     Route::delete('/favorites/{type}/{id}', [FavoriteController::class, 'destroy']);
 
-    // Novas rotas para notícias e equipas
-    Route::get('/news', function (App\Services\BasketballApiService $service) {
+    // Rota API para notícias (usado pelo frontend via AJAX)
+    Route::get('/news-data', function (App\Services\BasketballApiService $service) {
         $league = request('league');
         $limit = request('limit', 10);
         return $service->getNews($league, $limit);
@@ -68,14 +68,70 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
         return $service->getTeam($league, $teamId);
     });
 
+    // Standings
+    Route::get('/standings/{league}', function (App\Services\BasketballApiService $service, string $league, Illuminate\Http\Request $request) {
+        try {
+            $standings = $service->getStandings($league);
+            
+            if ($standings === null) {
+                return response()->json([
+                    'error' => 'Standings not available for this league',
+                    'league' => $league
+                ], 404);
+            }
+            
+            // Filter by conference if requested
+            $conference = $request->query('conference');
+            if ($conference && $league === 'nba') {
+                $conferenceMap = [
+                    'eastern' => 'Eastern Conference',
+                    'western' => 'Western Conference'
+                ];
+                $conferenceName = $conferenceMap[$conference] ?? null;
+                
+                if ($conferenceName) {
+                    $standings = array_filter($standings, function($team) use ($conferenceName) {
+                        return isset($team['conference']) && $team['conference'] === $conferenceName;
+                    });
+                    $standings = array_values($standings); // Re-index array
+                }
+            }
+            
+            return response()->json($standings);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch standings',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
+
     // Top players aggregation
     Route::get('/players/top', [App\Http\Controllers\PlayerController::class, 'topPlayers']);
+    
+    // Player search
+    Route::get('/players/search', [App\Http\Controllers\PlayerController::class, 'search']);
 });
 
 // Página de detalhes do jogador
 Route::get('/players/{league}/{playerId}', [App\Http\Controllers\PlayerController::class, 'show'])
     ->middleware(['auth'])
     ->name('players.show');
+
+// Games pages
+Route::get('/games', function () {
+    return Inertia::render('Games/Index');
+})->middleware(['auth'])->name('games.index');
+
+// News page
+Route::get('/news', function () {
+    return Inertia::render('News/Index');
+})->middleware(['auth'])->name('news.index');
+
+// Standings page
+Route::get('/standings', function () {
+    return Inertia::render('Standings/Index');
+})->middleware(['auth'])->name('standings.index');
 
 // Página pública do jogo (frontend) - renderiza a página Inertia com detalhes do jogo
 Route::get('/games/{league}/{id}', [GameController::class, 'page'])->middleware(['auth'])->name('games.show');

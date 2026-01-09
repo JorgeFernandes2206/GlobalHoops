@@ -1,176 +1,188 @@
 import { useEffect, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import HeroGame from '@/Components/Dashboard/HeroGame';
 import LiveGamesGrid from '@/Components/Dashboard/LiveGamesGrid';
 import UpcomingGamesList from '@/Components/Dashboard/UpcomingGamesList';
 import FinishedGamesGrid from '@/Components/Dashboard/FinishedGamesGrid';
 import TopPlayersCard from '@/Components/Dashboard/TopPlayersCard';
-import NotificationsSidebar from '@/Components/Dashboard/NotificationsSidebar';
-import NewsSection from '@/Components/Dashboard/NewsSection';
 import { motion } from 'framer-motion';
-import { Flame, RefreshCw, Sparkles } from 'lucide-react';
+import { Calendar, Clock, Trophy, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 
-export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, finishedGames, topPlayers, notifications, news }) {
+export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, finishedGames, topPlayers }) {
     const [liveGames, setLiveGames] = useState(initialLiveGames || []);
-    const [loading, setLoading] = useState(false);
 
-    // Auto-refresh jogos ao vivo a cada 30 segundos
+    // Auto-refresh live games every 30 seconds
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
-                setLoading(true);
                 const response = await axios.get('/api/games/live');
                 setLiveGames(response.data);
             } catch (error) {
-                if (import.meta.env.DEV) {
-                    console.error('Error refreshing live games:', error);
-                }
-            } finally {
-                setLoading(false);
+                console.error('Error refreshing live games:', error);
             }
         }, 30000);
 
         return () => clearInterval(interval);
     }, []);
 
-    // Escolher jogo em destaque (o primeiro ao vivo)
-    const featuredGame = liveGames && liveGames.length > 0 ? liveGames[0] : null;
+    // Escolher jogo em destaque
+    const featuredGame = liveGames && liveGames.length > 0 
+        ? liveGames[0] 
+        : (upcomingGames && upcomingGames.length > 0 ? upcomingGames[0] : null);
 
     return (
         <AuthenticatedLayout
             header={
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-4">
-                        <motion.div
-                            whileHover={{ scale: 1.05, rotate: 5 }}
-                            className="relative p-3 bg-gradient-to-br from-[#FF2D20] via-orange-600 to-[#FF2D20] rounded-2xl shadow-2xl shadow-[#FF2D20]/30"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#FF2D20] to-orange-600 rounded-2xl blur-xl opacity-50 animate-pulse" />
-                            <Flame className="relative w-7 h-7 text-white drop-shadow-lg" />
-                        </motion.div>
-                        <div>
-                            <h2 className="text-4xl font-black leading-tight bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent drop-shadow-sm">
-                                GlobalHoops
+                <div className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-blue-500/10 to-purple-500/10 animate-gradient"></div>
+                    <div className="relative">
+                        <div className="flex items-center gap-3">
+                            <h2 className="font-bold text-3xl text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 leading-tight">
+                                GlobalHoops Dashboard
                             </h2>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <Sparkles className="w-3 h-3 text-[#FF2D20]" />
-                                <p className="text-xs text-gray-400 font-semibold tracking-wider uppercase">Premium Experience</p>
-                            </div>
+                            <span className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-full text-xs font-semibold text-blue-400">
+                                Season 2025-26
+                            </span>
                         </div>
+                        <p className="text-gray-400 text-sm mt-1">Your premium basketball hub</p>
                     </div>
-                    {loading && (
-                        <motion.span
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="relative overflow-hidden text-sm text-white flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 rounded-2xl border border-[#FF2D20]/40 shadow-xl shadow-[#FF2D20]/10"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#FF2D20]/10 to-transparent animate-shimmer" />
-                            <RefreshCw className="relative w-4 h-4 animate-spin text-[#FF2D20]" />
-                            <span className="relative font-bold">Updating Live</span>
-                        </motion.span>
-                    )}
-                </motion.div>
+                </div>
             }
         >
-            <Head title="GlobalHoops" />
+            <Head title="Dashboard" />
 
-            {/* Compact Dashboard Layout */}
-            <div className="bg-gradient-to-b from-gray-900 via-gray-900 to-black">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-                    {/* Featured Game - Compact */}
+            <div className="py-8">
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                    {/* Featured Game - Premium Hero */}
                     {featuredGame && (
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mb-6 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden"
+                            transition={{ duration: 0.6, ease: "easeOut" }}
+                            className="relative group"
                         >
-                            <HeroGame game={featuredGame} />
+                            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-blue-500/20 to-purple-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+                            <div className="relative">
+                                <HeroGame game={featuredGame} />
+                            </div>
                         </motion.div>
                     )}
 
-                    {/* Main Grid - Tudo em uma linha */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                        {/* Left Column - Games */}
-                        <div className="lg:col-span-8 space-y-4">
-                            {/* Live Games - Horizontal compact */}
-                            {liveGames && liveGames.length > 0 && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.1 }}
-                                    className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
+                    {/* Live Games - Premium Section */}
+                    {liveGames && liveGames.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                        <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+                                        <div className="absolute inset-0 w-4 h-4 bg-red-500 rounded-full animate-ping"></div>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-600">
+                                        Live Now
+                                    </h3>
+                                </div>
+                                <Link
+                                    href={route('games.index')}
+                                    className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 border border-orange-500/20 rounded-xl text-orange-400 hover:text-orange-300 font-semibold transition-all duration-300"
                                 >
-                                    <LiveGamesGrid games={liveGames} />
-                                </motion.div>
-                            )}
-
-                            {/* Upcoming & Finished - Side by side */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
-                                >
-                                    <UpcomingGamesList games={upcomingGames || []} />
-                                </motion.div>
-
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
-                                >
-                                    <FinishedGamesGrid games={finishedGames || []} />
-                                </motion.div>
+                                    View All
+                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </Link>
                             </div>
+                            <LiveGamesGrid games={liveGames} />
+                        </motion.div>
+                    )}
 
-                            {/* News - Compact */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
-                            >
-                                <NewsSection news={news || []} />
-                            </motion.div>
-                        </div>
+                    {/* Games and Players Grid - Premium Cards */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Upcoming Games */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+                            className="relative group"
+                        >
+                            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+                            <div className="relative">
+                                <div className="flex items-center justify-between mb-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl border border-blue-500/30">
+                                            <Calendar className="w-5 h-5 text-blue-400" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white">
+                                            Upcoming
+                                        </h3>
+                                    </div>
+                                    <Link
+                                        href={route('games.index')}
+                                        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors group"
+                                    >
+                                        All
+                                        <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                                    </Link>
+                                </div>
+                                <UpcomingGamesList games={(upcomingGames || []).slice(0, 6)} />
+                            </div>
+                        </motion.div>
 
-                        {/* Right Sidebar - Sticky */}
-                        <div className="lg:col-span-4 lg:sticky lg:top-6 lg:self-start space-y-4">
-                            {/* Top Players */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                                className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
-                            >
+                        {/* Recent Results */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+                            className="relative group"
+                        >
+                            <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+                            <div className="relative">
+                                <div className="flex items-center justify-between mb-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30">
+                                            <Trophy className="w-5 h-5 text-green-400" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white">
+                                            Recent
+                                        </h3>
+                                    </div>
+                                    <Link
+                                        href={route('games.index')}
+                                        className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300 font-medium transition-colors group"
+                                    >
+                                        All
+                                        <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                                    </Link>
+                                </div>
+                                <FinishedGamesGrid games={(finishedGames || []).slice(0, 6)} />
+                            </div>
+                        </motion.div>
+
+                        {/* Top Players */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
+                            className="relative group"
+                        >
+                            <div className="absolute -inset-1 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+                            <div className="relative">
+                                <div className="flex items-center justify-between mb-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30">
+                                            <Trophy className="w-5 h-5 text-yellow-400" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white">
+                                            Top Players
+                                        </h3>
+                                    </div>
+                                </div>
                                 <TopPlayersCard players={topPlayers || []} />
-                            </motion.div>
-
-                            {/* Notifications */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl"
-                            >
-                                <NotificationsSidebar
-                                    notifications={notifications || []}
-                                    liveGames={liveGames}
-                                    upcomingGames={upcomingGames}
-                                    topPlayers={topPlayers}
-                                    news={news}
-                                />
-                            </motion.div>
-                        </div>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
             </div>

@@ -19,13 +19,22 @@ class TeamFollowerController extends Controller
     /**
      * Show all teams available to follow
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         $followedTeamIds = $user->followedTeamIds();
+        
+        // Obter liga selecionada (default: NBA)
+        $league = $request->input('league', 'nba');
+        $country = $request->input('country', null);
+        $validLeagues = ['nba', 'euroleague'];
+        
+        if (!in_array($league, $validLeagues)) {
+            $league = 'nba';
+        }
 
-        // Fetch NBA teams from API
-        $teamsData = $this->basketballApi->getTeams('nba');
+        // Fetch teams from API for selected league
+        $teamsData = $this->basketballApi->getTeams($league, $country);
         $teams = collect($teamsData['response'] ?? [])->map(function ($team) use ($followedTeamIds) {
             return [
                 'id' => (string)$team['id'],
@@ -34,13 +43,29 @@ class TeamFollowerController extends Controller
                 'logo_url' => $team['logo'],
                 'color' => $team['color'],
                 'league' => $team['league'],
+                'city' => $team['city'] ?? null,
+                'country' => $team['country'] ?? null,
                 'is_following' => in_array((string)$team['id'], $followedTeamIds),
             ];
         });
+        
+        // Get available countries for Europe filter
+        $availableCountries = [];
+        if ($league === 'euroleague') {
+            $euroleagueService = app(\App\Services\EuroleagueService::class);
+            $availableCountries = $euroleagueService->getCountries();
+        }
 
         return Inertia::render('Teams/Index', [
             'teams' => $teams,
             'followedTeamIds' => $followedTeamIds,
+            'selectedLeague' => $league,
+            'selectedCountry' => $country,
+            'availableLeagues' => [
+                ['id' => 'nba', 'name' => 'NBA'],
+                ['id' => 'euroleague', 'name' => 'Europe'],
+            ],
+            'availableCountries' => $availableCountries,
         ]);
     }    /**
      * Show teams that user follows
@@ -50,9 +75,10 @@ class TeamFollowerController extends Controller
         $user = auth()->user();
         $followers = $user->teamFollowers()->get();
 
-        // Fetch NBA teams from API
-        $teamsData = $this->basketballApi->getTeams('nba');
-        $allTeams = collect($teamsData['response'] ?? []);
+        // Fetch teams from both NBA and Euroleague
+        $nbaTeams = collect($this->basketballApi->getTeams('nba')['response'] ?? []);
+        $euroleagueTeams = collect($this->basketballApi->getTeams('euroleague')['response'] ?? []);
+        $allTeams = $nbaTeams->concat($euroleagueTeams);
 
         // Match followed teams with API data
         $followedTeams = $followers->map(function ($follower) use ($allTeams) {
@@ -63,6 +89,7 @@ class TeamFollowerController extends Controller
                 'name' => $teamData['name'] ?? 'Unknown Team',
                 'abbreviation' => $teamData['abbreviation'] ?? '',
                 'logo_url' => $teamData['logo'] ?? null,
+                'league' => $teamData['league'] ?? 'Unknown',
                 'notifications_enabled' => $follower->notifications_enabled,
                 'followed_at' => $follower->created_at,
             ];

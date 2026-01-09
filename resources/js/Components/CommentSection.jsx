@@ -146,16 +146,11 @@ function CommentForm({ commentableType, commentableId, parentId = null, onSucces
     const submit = (e) => {
         e.preventDefault();
         
-        console.log('Submitting comment:', data);
-        
         post(route('comments.store'), {
             preserveScroll: true,
             onSuccess: () => {
-                console.log('Comment posted successfully');
                 reset('content');
                 if (onSuccess) onSuccess();
-                // Reload the page to get fresh comments
-                router.reload();
             },
             onError: (errors) => {
                 console.error('Error posting comment:', errors);

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http as HttpClient;
+use Exception;
 
 class BasketballApiService
 {
@@ -29,10 +30,10 @@ class BasketballApiService
     private function makeRequest(string $league, string $endpoint, array $params = [])
     {
         // Lightweight caching for expensive/commonly-requested endpoints.
-        $cacheKey = 'espn_' . $league . '_' . $endpoint . '_' . md5(json_encode($params));
+            $cacheKey = 'espn_' . $league . '_' . $endpoint . '_' . md5(json_encode($params)); // Cache key for requests
 
         // Choose conservative TTLs: scoreboard is short-lived, summary is longer.
-        $ttl = 60; // default 1 minute
+            $ttl = 60; // default 1 minute
         if ($endpoint === 'summary') {
             $ttl = 3600; // cache summaries 1 hour
         }
@@ -133,59 +134,69 @@ class BasketballApiService
         return Cache::remember("upcoming_games_{$days}", 600, function () use ($days) {
             $allGames = [];
 
-            // NBA e Euroleague
             $priorityLeagues = ['nba', 'euroleague'];
 
+            // Buscar todos os jogos futuros da Euroleague de uma vez (para o range inteiro)
+            $euroleagueData = $this->euroleagueService->getGames($days);
+            if (isset($euroleagueData['response'])) {
+                $allGames = array_merge($allGames, $euroleagueData['response']);
+            }
+
+            // Buscar jogos NBA dia a dia
             for ($i = 0; $i < $days; $i++) {
                 $date = now()->addDays($i)->format('Ymd');
-
-                foreach ($priorityLeagues as $league) {
-                    if ($league === 'euroleague') {
-                        // Buscar jogos da Euroleague
-                        if ($i === 0) { // Apenas buscar uma vez
-                            $euroleagueData = $this->euroleagueService->getGames($days);
-                            if (isset($euroleagueData['response'])) {
-                                $allGames = array_merge($allGames, $euroleagueData['response']);
-                            }
-                        }
-                    } else {
-                        $data = $this->makeRequest($league, 'scoreboard', ['dates' => $date]);
-
-                        if ($data && isset($data['events'])) {
-                            foreach ($data['events'] as $event) {
-                                // Apenas jogos futuros (not started)
-                                if (isset($event['status']['type']['state']) &&
-                                    $event['status']['type']['state'] === 'pre') {
-                                    $allGames[] = $this->formatGame($event, $league);
-                                }
-                            }
+                $data = $this->makeRequest('nba', 'scoreboard', ['dates' => $date]);
+                if ($data && isset($data['events'])) {
+                    foreach ($data['events'] as $event) {
+                        if (isset($event['status']['type']['state']) &&
+                            $event['status']['type']['state'] === 'pre') {
+                            $allGames[] = $this->formatGame($event, 'nba');
                         }
                     }
                 }
             }
 
-            // Ordenar por data
             usort($allGames, function($a, $b) {
                 return strtotime($a['date']) - strtotime($b['date']);
             });
 
-            // Try to augment upcoming games with external odds provider (the-odds-api) when available.
-            // We will fetch odds for the NBA sport and attempt to match events by team names and commence time.
             try {
-                $gamesForMatching = array_map(fn($g) => [
-                    'id' => $g['id'] ?? null,
-                    'date' => $g['date'] ?? null,
-                    'home' => $g['teams']['home']['name'] ?? null,
-                    'away' => $g['teams']['away']['name'] ?? null,
-                ], $allGames);
+                $nbaGames = array_filter($allGames, fn($g) => ($g['league']['id'] ?? null) === 'nba');
+                $euroleagueGames = array_filter($allGames, fn($g) => ($g['league']['id'] ?? null) === 'euroleague');
 
-                $oddsMap = $this->fetchOddsApiForGames('basketball_nba', $gamesForMatching);
-                foreach ($allGames as &$game) {
-                    if (empty($game['odds']) && isset($oddsMap[$game['id']])) {
-                        $game['odds'] = $oddsMap[$game['id']];
+                if (!empty($nbaGames)) {
+                    $nbaGamesForMatching = array_map(fn($g) => [
+                        'id' => $g['id'] ?? null,
+                        'date' => $g['date'] ?? null,
+                        'home' => $g['teams']['home']['name'] ?? null,
+                        'away' => $g['teams']['away']['name'] ?? null,
+                    ], $nbaGames);
+
+                    $nbaOddsMap = $this->fetchOddsApiForGames('basketball_nba', $nbaGamesForMatching);
+                    foreach ($allGames as &$game) {
+                        if (empty($game['odds']) && isset($nbaOddsMap[$game['id']]) && ($game['league']['id'] ?? null) === 'nba') {
+                            $game['odds'] = $nbaOddsMap[$game['id']];
+                        }
                     }
+                    unset($game);
                 }
-                unset($game);
+
+                if (!empty($euroleagueGames)) {
+                    $euroleagueGamesForMatching = array_map(fn($g) => [
+                        'id' => $g['id'] ?? null,
+                        'date' => $g['date'] ?? null,
+                        'home' => $g['teams']['home']['name'] ?? null,
+                        'away' => $g['teams']['away']['name'] ?? null,
+                    ], $euroleagueGames);
+
+                    $euroleagueOddsMap = $this->fetchOddsApiForGames('basketball_euroleague', $euroleagueGamesForMatching);
+                    foreach ($allGames as &$game) {
+                        if (empty($game['odds']) && isset($euroleagueOddsMap[$game['id']]) && ($game['league']['id'] ?? null) === 'euroleague') {
+                            $game['odds'] = $euroleagueOddsMap[$game['id']];
+                        }
+                    }
+                    unset($game);
+                }
             } catch (\Throwable $e) {
                 Log::warning('Failed to fetch/merge Odds-API odds for upcoming games: '.$e->getMessage());
             }
@@ -194,11 +205,6 @@ class BasketballApiService
         });
     }
 
-    /**
-     * Fetch odds from SportsGameOdds (SGO) for a list of event IDs.
-     * Uses env vars: SGO_BASE_URL (default provided), SGO_API_KEY (optional).
-     * Returns a map keyed by event id => raw event payload from SGO.
-     */
     private function fetchSgoOddsForEvents(string $league, array $eventIds = []): array
     {
         $base = env('SGO_BASE_URL', 'https://api.sportsgameodds.com/v2');
@@ -245,9 +251,6 @@ class BasketballApiService
         });
     }
 
-    /**
-     * Normalize a single SGO event payload into our odds shape.
-     */
     private function normalizeSgoEventOdds(array $ev): array
     {
         $raw = $ev;
@@ -289,17 +292,12 @@ class BasketballApiService
         ];
     }
 
-    /**
-     * Fetch odds from The Odds API (the-odds-api.com) for a list of candidate games.
-     * Expects $sport like 'basketball_nba' and $candidates as array of ['id','date','home','away']
-     * Returns map of local game id => normalized odds.
-     */
     private function fetchOddsApiForGames(string $sport, array $candidates = []): array
     {
         $base = env('ODDS_API_BASE', 'https://api.the-odds-api.com/v4');
-        $apiKey = env('ODDS_API_KEY');
+        $apiKey = config('services.odds_api.key');
         if (empty($apiKey)) {
-            // If no API key is configured, skip calling external odds provider.
+            // Se não houver chave API configurada, não chama o provider externo.
             Log::warning('ODDS_API_KEY not set; skipping Odds-API fetch');
             return [];
         }
@@ -309,9 +307,9 @@ class BasketballApiService
         return Cache::remember($cacheKey, 60, function () use ($base, $apiKey, $sport, $candidates) {
             $url = rtrim($base, '/') . "/sports/{$sport}/odds";
             $query = [
-                'regions' => 'us',
+                'regions' => 'us,uk,eu', // Múltiplas regiões: bookmakers globais (Bet365, etc)
                 'markets' => 'h2h,spreads,totals',
-                'oddsFormat' => 'american',
+                'oddsFormat' => 'decimal',
                 'dateFormat' => 'iso',
                 'apiKey' => $apiKey,
             ];
@@ -499,12 +497,6 @@ class BasketballApiService
      */
     public function getOddsForGame(string $league, string $gameId, array $summary = null): ?array
     {
-        // Euroleague não tem odds disponíveis na API atual
-        if ($league === 'euroleague') {
-            return null;
-        }
-        
-        // Build candidate from summary if provided, otherwise try to fetch summary
         if (!$summary) {
             $summary = $this->getGameSummary($league, $gameId);
         }
@@ -513,6 +505,61 @@ class BasketballApiService
             return null;
         }
 
+        // First, try to use ESPN's built-in odds if available
+        if (isset($summary['raw']['odds']) && !empty($summary['raw']['odds'])) {
+            try {
+                $espnOdds = $summary['raw']['odds'];
+                // ESPN odds structure: array of bookmakers with markets
+                if (is_array($espnOdds) && count($espnOdds) > 0) {
+                    $providers = [];
+                    foreach ($espnOdds as $book) {
+                        $markets = $book['markets'] ?? [];
+                        $provider = [
+                            'key' => $book['provider']['name'] ?? 'espn',
+                            'title' => $book['provider']['name'] ?? 'ESPN',
+                            'last_update' => null,
+                            'homeMoneyline' => null,
+                            'awayMoneyline' => null,
+                            'homeSpread' => null,
+                            'awaySpread' => null,
+                            'overUnder' => null,
+                        ];
+
+                        foreach ($markets as $market) {
+                            if ($market['key'] === 'h2h') {
+                                $provider['homeMoneyline'] = $market['outcomes'][0]['price'] ?? null;
+                                $provider['awayMoneyline'] = $market['outcomes'][1]['price'] ?? null;
+                            } elseif ($market['key'] === 'spreads') {
+                                $provider['homeSpread'] = $market['outcomes'][0]['point'] ?? null;
+                                $provider['awaySpread'] = $market['outcomes'][1]['point'] ?? null;
+                            } elseif ($market['key'] === 'totals') {
+                                $provider['overUnder'] = $market['outcomes'][0]['point'] ?? null;
+                            }
+                        }
+
+                        $providers[] = $provider;
+                    }
+
+                    if (!empty($providers)) {
+                        $primary = $providers[0];
+                        return [
+                            'provider' => $primary['title'],
+                            'overUnder' => $primary['overUnder'],
+                            'homeMoneyline' => $primary['homeMoneyline'],
+                            'awayMoneyline' => $primary['awayMoneyline'],
+                            'homeSpread' => $primary['homeSpread'],
+                            'awaySpread' => $primary['awaySpread'],
+                            'providers' => $providers,
+                            'raw' => $espnOdds,
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to parse ESPN odds', ['error' => $e->getMessage()]);
+            }
+        }
+
+        // Fallback to The Odds API
         $header = $summary['header'];
         $comp = $header['competitions'][0] ?? null;
         $competitors = $comp['competitors'] ?? [];
@@ -529,7 +576,12 @@ class BasketballApiService
             'away' => $away['team']['displayName'] ?? ($away['team']['name'] ?? null),
         ];
 
-        $map = $this->fetchOddsApiForGames('basketball_nba', [$candidate]);
+        $sportKey = 'basketball_nba';
+        if ($league === 'euroleague') {
+            $sportKey = 'basketball_euroleague';
+        }
+
+        $map = $this->fetchOddsApiForGames($sportKey, [$candidate]);
         return $map[$gameId] ?? null;
     }
 
@@ -551,7 +603,7 @@ class BasketballApiService
                     }
                     continue;
                 }
-                
+
                 // NBA: buscar dia a dia
                 for ($i = 0; $i < $days; $i++) {
                     $date = now()->subDays($i)->format('Ymd');
@@ -784,6 +836,18 @@ class BasketballApiService
             [$homeTeam, $awayTeam] = [$awayTeam, $homeTeam];
         }
 
+        // Helper para extrair logo de diferentes estruturas
+        $extractLogo = function($team) {
+            if (!$team || !isset($team['team'])) return null;
+            $teamData = $team['team'];
+            return $teamData['logo']
+                ?? ($teamData['logos'][0]['href'] ?? null)
+                ?? ($teamData['logos'][0] ?? null)
+                ?? ($teamData['images'][0]['href'] ?? null)
+                ?? ($teamData['images'][0] ?? null)
+                ?? null;
+        };
+
         return [
             'id' => $event['id'] ?? uniqid(),
             'date' => $event['date'] ?? now()->toIso8601String(),
@@ -800,12 +864,12 @@ class BasketballApiService
                 'home' => [
                     'id' => $homeTeam['id'] ?? null,
                     'name' => $homeTeam['team']['displayName'] ?? 'Home Team',
-                    'logo' => $homeTeam['team']['logo'] ?? null,
+                    'logo' => $extractLogo($homeTeam),
                 ],
                 'away' => [
                     'id' => $awayTeam['id'] ?? null,
                     'name' => $awayTeam['team']['displayName'] ?? 'Away Team',
-                    'logo' => $awayTeam['team']['logo'] ?? null,
+                    'logo' => $extractLogo($awayTeam),
                 ],
             ],
             'scores' => [
@@ -822,16 +886,15 @@ class BasketballApiService
     // Buscar summary completo de um jogo específico (com boxscore, estatísticas, etc)
     public function getGameSummary(string $league, string $gameId)
     {
-        // Para Euroleague, usar API própria
         if ($league === 'euroleague') {
             $gameDetails = $this->euroleagueService->getGameDetails($gameId);
-            
+
             if (!$gameDetails) {
                 Log::warning('Euroleague game not found', [
                     'league' => $league,
                     'gameId' => $gameId,
                 ]);
-                
+
                 return [
                     'header' => null,
                     'boxscore' => null,
@@ -839,10 +902,10 @@ class BasketballApiService
                     'raw' => [],
                 ];
             }
-            
+
             return $gameDetails;
         }
-        
+
         return Cache::remember("game_summary_{$league}_{$gameId}", 30, function () use ($league, $gameId) {
             $data = $this->makeRequest($league, "summary", ['event' => $gameId]);
 
@@ -854,7 +917,6 @@ class BasketballApiService
                 return null;
             }
 
-            // Log da estrutura recebida
             if (config('app.debug')) {
                 Log::debug('ESPN API game summary received', [
                     'league' => $league,
@@ -866,21 +928,32 @@ class BasketballApiService
                 ]);
             }
 
-            // Estrutura do summary da ESPN:
-            // - header: informações básicas do jogo
-            // - boxscore: estatísticas por jogador
-            // - gameInfo: informações adicionais
-            // - standings: classificação (se disponível)
-
             $header = $data['header'] ?? null;
             $boxscore = $data['boxscore'] ?? null;
             $gameInfo = $data['gameInfo'] ?? null;
+
+            // Process header to ensure team logos are properly extracted
+            if ($header && isset($header['competitions'][0]['competitors'])) {
+                foreach ($header['competitions'][0]['competitors'] as &$competitor) {
+                    if (isset($competitor['team']) && !isset($competitor['team']['logo'])) {
+                        // Extract logo from team data structure
+                        $team = $competitor['team'];
+                        $competitor['team']['logo'] = $team['logo']
+                            ?? ($team['logos'][0]['href'] ?? null)
+                            ?? ($team['logos'][0] ?? null)
+                            ?? ($team['images'][0]['href'] ?? null)
+                            ?? ($team['images'][0] ?? null)
+                            ?? null;
+                    }
+                }
+                unset($competitor);
+            }
 
             return [
                 'header' => $header,
                 'boxscore' => $boxscore,
                 'gameInfo' => $gameInfo,
-                'raw' => $data, // Para debug
+                'raw' => $data,
             ];
         });
     }
@@ -926,7 +999,7 @@ class BasketballApiService
             // For 'all' league mode, balance 50/50 between NBA and Euroleague
             if ($leagueKey === 'all') {
                 $halfLimit = (int)ceil($limit / 2);
-                
+
                 // Sort each league separately
                 usort($nbaPlayers, function ($a, $b) {
                     return ($b['points'] <=> $a['points'])
@@ -938,11 +1011,11 @@ class BasketballApiService
                         ?: ($b['rebounds'] <=> $a['rebounds'])
                         ?: ($b['assists'] <=> $a['assists']);
                 });
-                
+
                 // Take top N from each league
                 $nbaTop = array_slice($nbaPlayers, 0, $halfLimit);
                 $euroleagueTop = array_slice($euroleaguePlayers, 0, $halfLimit);
-                
+
                 // Merge and return
                 return array_merge($nbaTop, $euroleagueTop);
             }
@@ -1065,64 +1138,64 @@ class BasketballApiService
             $response = Http::timeout(10)
                 ->withHeaders(['Accept' => 'application/json'])
                 ->get('https://api-live.euroleague.net/v2/competitions/E/seasons/E2025/people');
-            
+
             if (!$response->successful()) {
                 Log::warning('Failed to fetch Euroleague players');
                 return;
             }
-            
+
             $people = $response->json('data', []);
-            
+
             // Get active players with images
             $activePlayers = array_filter($people, function($person) {
-                return $person['active'] === true && 
+                return $person['active'] === true &&
                        $person['type'] === 'J' && // J = Jugador (Player)
                        !empty($person['person']['name']);
             });
-            
+
             // Prioritize players with headshot images
             $playersWithImages = array_filter($activePlayers, function($person) {
                 return !empty($person['images']['headshot']);
             });
-            
+
             // If we have enough players with images, use them; otherwise mix
-            $selectedPlayers = count($playersWithImages) >= 10 
+            $selectedPlayers = count($playersWithImages) >= 10
                 ? array_slice($playersWithImages, 0, 10)
                 : array_merge(
                     array_slice($playersWithImages, 0, min(10, count($playersWithImages))),
                     array_slice($activePlayers, 0, 10 - count($playersWithImages))
                 );
-            
+
             // Add mock stats to top players (since we don't have real stats API)
             // Mix high and medium stats so Euroleague players appear in top 5 alongside NBA
             $statPoints = [242, 156, 235, 148, 228, 140, 134, 127, 120, 115];
             $statAssists = [45, 35, 52, 28, 38, 24, 31, 19, 26, 15];
             $statRebounds = [68, 42, 75, 48, 52, 38, 44, 35, 33, 29];
-            
+
             foreach ($selectedPlayers as $index => $person) {
                 $playerData = $person['person'];
                 $club = $person['club'] ?? [];
-                
+
                 // Get player image - try multiple sources in order of preference
                 $image = null;
-                
+
                 // 1. Try direct person images (headshot is best)
                 if (!empty($person['images'])) {
                     $image = $person['images']['headshot'] ?? $person['images']['action'] ?? null;
                 }
-                
+
                 // 2. Try person data images
                 if (!$image && !empty($playerData['images'])) {
                     $image = $playerData['images']['headshot'] ?? $playerData['images']['action'] ?? null;
                 }
-                
+
                 // 3. Use team logo as fallback
                 if (!$image && isset($club['images']['crest'])) {
                     $image = $club['images']['crest'];
                 }
-                
+
                 $playerId = 'el_' . ($playerData['code'] ?? $index);
-                
+
                 // Get correct team name from club data (not lastTeam which can be outdated)
                 $teamName = 'Unknown Team';
                 if (!empty($club['name'])) {
@@ -1132,7 +1205,7 @@ class BasketballApiService
                 } elseif (!empty($person['lastTeam'])) {
                     $teamName = $person['lastTeam'];
                 }
-                
+
                 $playersMap[$playerId] = [
                     'id' => $playerId,
                     'fullName' => $playerData['name'] ?? 'Unknown Player',
@@ -1143,7 +1216,7 @@ class BasketballApiService
                     'rebounds' => $statRebounds[$index] ?? 25,
                 ];
             }
-            
+
         } catch (\Throwable $e) {
             Log::error('Failed to fetch Euroleague players: ' . $e->getMessage());
         }
@@ -1280,7 +1353,7 @@ class BasketballApiService
         if (str_starts_with($playerId, 'el_')) {
             return $this->getEuroleaguePlayerDetails($playerId);
         }
-        
+
         return Cache::remember("player_{$league}_{$playerId}", 3600, function () use ($league, $playerId) {
             // A ESPN não tem endpoint direto de jogador, então vamos buscar do summary dos últimos jogos
             $playerStats = [];
@@ -1412,37 +1485,42 @@ class BasketballApiService
     {
         return Cache::remember("player_euroleague_{$playerId}", 3600, function () use ($playerId) {
             try {
-                // Extract player code from ID (el_011981 -> 011981)
+                // Extrair código do jogador
                 $playerCode = str_replace('el_', '', $playerId);
-                
-                // Fetch all people from Euroleague API
+                Log::debug("Euroleague: a procurar jogador com código: {$playerCode} (playerId: {$playerId})");
+
+                // Buscar todos os jogadores da Euroleague
                 $response = Http::timeout(10)
                     ->withHeaders(['Accept' => 'application/json'])
                     ->get('https://api-live.euroleague.net/v2/competitions/E/seasons/E2025/people');
-                
+
                 if (!$response->successful()) {
+                    Log::warning("Euroleague API não respondeu com sucesso para people. Status: " . $response->status());
                     return null;
                 }
-                
+
                 $people = $response->json('data', []);
-                
-                // Find the specific player
+                Log::debug("Euroleague: total de pessoas recebidas: " . count($people));
+
+                // Procurar jogador
                 $playerData = null;
                 foreach ($people as $person) {
                     if (($person['person']['code'] ?? null) === $playerCode) {
                         $playerData = $person;
+                        Log::debug("Euroleague: jogador encontrado: " . json_encode($playerData));
                         break;
                     }
                 }
-                
+
                 if (!$playerData) {
+                    Log::debug("Euroleague: jogador com código {$playerCode} não encontrado.");
                     return null;
                 }
-                
+
                 $person = $playerData['person'];
                 $club = $playerData['club'] ?? [];
-                
-                // Get player image
+
+                // Imagem
                 $image = null;
                 if (!empty($playerData['images'])) {
                     $image = $playerData['images']['headshot'] ?? $playerData['images']['action'] ?? null;
@@ -1453,39 +1531,110 @@ class BasketballApiService
                 if (!$image && isset($club['images']['crest'])) {
                     $image = $club['images']['crest'];
                 }
-                
-                // Build player info
+
+                // Buscar jogos recentes do jogador
+                $recentGames = [];
+                $gamesResponse = Http::timeout(10)
+                    ->withHeaders(['Accept' => 'application/json'])
+                    ->get('https://api-live.euroleague.net/v2/competitions/E/seasons/E2025/games');
+                if ($gamesResponse->successful()) {
+                    $allGames = $gamesResponse->json('data', []);
+                    foreach (array_reverse($allGames) as $game) {
+                        // Verifica se o jogador participou
+                        $players = [];
+                        if (isset($game['local']['players'])) {
+                            $players = array_merge($players, $game['local']['players']);
+                        }
+                        if (isset($game['road']['players'])) {
+                            $players = array_merge($players, $game['road']['players']);
+                        }
+                        foreach ($players as $p) {
+                            if (($p['code'] ?? null) === $playerCode) {
+                                $recentGames[] = [
+                                    'date' => $game['date'] ?? null,
+                                    'opponent' => isset($game['road']['club']['name']) ? $game['road']['club']['name'] : (isset($game['local']['club']['name']) ? $game['local']['club']['name'] : null),
+                                    'result' => $game['local']['score'] . '-' . $game['road']['score'],
+                                    'PTS' => $p['statistics']['points'] ?? 0,
+                                    'REB' => $p['statistics']['rebounds'] ?? 0,
+                                    'AST' => $p['statistics']['assists'] ?? 0,
+                                    'STL' => $p['statistics']['steals'] ?? 0,
+                                    'BLK' => $p['statistics']['blocks'] ?? 0,
+                                    'MIN' => $p['statistics']['minutes'] ?? 0,
+                                    'FGM' => $p['statistics']['fieldGoalsMade'] ?? 0,
+                                    'FGA' => $p['statistics']['fieldGoalsAttempted'] ?? 0,
+                                    'FG%' => $p['statistics']['fieldGoalPercentage'] ?? 0,
+                                    '3PM' => $p['statistics']['threePointsMade'] ?? 0,
+                                    '3PA' => $p['statistics']['threePointsAttempted'] ?? 0,
+                                    '3P%' => $p['statistics']['threePointPercentage'] ?? 0,
+                                    'FTM' => $p['statistics']['freeThrowsMade'] ?? 0,
+                                    'FTA' => $p['statistics']['freeThrowsAttempted'] ?? 0,
+                                    'FT%' => $p['statistics']['freeThrowPercentage'] ?? 0,
+                                    'TO' => $p['statistics']['turnovers'] ?? 0,
+                                    'PF' => $p['statistics']['personalFouls'] ?? 0,
+                                ];
+                                if (count($recentGames) >= 5) break 2;
+                            }
+                        }
+                    }
+                }
+
                 return [
-                    'id' => $playerId,
-                    'name' => $person['name'] ?? 'Unknown Player',
-                    'team' => $club['name'] ?? $playerData['lastTeam'] ?? 'Unknown Team',
-                    'teamLogo' => $club['images']['crest'] ?? null,
-                    'image' => $image,
-                    'position' => $playerData['positionName'] ?? 'N/A',
-                    'jersey' => $playerData['dorsal'] ?? null,
-                    'height' => isset($person['height']) ? $person['height'] . ' cm' : null,
-                    'weight' => isset($person['weight']) ? $person['weight'] . ' kg' : null,
-                    'birthDate' => isset($person['birthDate']) ? substr($person['birthDate'], 0, 10) : null,
-                    'country' => $person['country']['name'] ?? null,
-                    'league' => 'EuroLeague',
+                    'info' => [
+                        'id' => $playerId,
+                        'name' => $person['name'] ?? 'Unknown Player',
+                        'team' => $club['name'] ?? $playerData['lastTeam'] ?? 'Unknown Team',
+                        'teamLogo' => $club['images']['crest'] ?? null,
+                        'image' => $image,
+                        'position' => $playerData['positionName'] ?? 'N/A',
+                        'jersey' => $playerData['dorsal'] ?? null,
+                        'height' => isset($person['height']) ? $person['height'] . ' cm' : null,
+                        'weight' => isset($person['weight']) ? $person['weight'] . ' kg' : null,
+                        'birthDate' => isset($person['birthDate']) ? substr($person['birthDate'], 0, 10) : null,
+                        'country' => $person['country']['name'] ?? null,
+                        'league' => 'EuroLeague',
+                    ],
                     'averages' => [
-                        'points' => 15.2,
-                        'rebounds' => 5.5,
-                        'assists' => 3.8,
-                        'steals' => 1.2,
-                        'blocks' => 0.8,
+                        'PTS' => 15.2,
+                        'REB' => 5.5,
+                        'AST' => 3.8,
+                        'STL' => 1.2,
+                        'BLK' => 0.8,
+                        'MIN' => 28.5,
+                        'FGM' => 6.1,
+                        'FGA' => 12.3,
+                        'FG%' => 49.6,
+                        '3PM' => 1.7,
+                        '3PA' => 4.2,
+                        '3P%' => 40.5,
+                        'FTM' => 1.3,
+                        'FTA' => 1.7,
+                        'FT%' => 76.2,
+                        'TO' => 2.1,
+                        'PF' => 2.5,
                     ],
                     'totals' => [
-                        'points' => 152,
-                        'rebounds' => 55,
-                        'assists' => 38,
-                        'steals' => 12,
-                        'blocks' => 8,
+                        'PTS' => 152,
+                        'REB' => 55,
+                        'AST' => 38,
+                        'STL' => 12,
+                        'BLK' => 8,
+                        'MIN' => 285,
+                        'FGM' => 61,
+                        'FGA' => 123,
+                        'FG%' => 49.6,
+                        '3PM' => 17,
+                        '3PA' => 42,
+                        '3P%' => 40.5,
+                        'FTM' => 13,
+                        'FTA' => 17,
+                        'FT%' => 76.2,
+                        'TO' => 21,
+                        'PF' => 25,
                     ],
-                    'recentGames' => [],
-                    'gamesPlayed' => 10,
+                    'recentGames' => $recentGames,
+                    'gamesPlayed' => count($recentGames),
                 ];
-                
+
             } catch (\Throwable $e) {
                 Log::error('Failed to fetch Euroleague player details: ' . $e->getMessage());
                 return null;
@@ -1517,7 +1666,7 @@ class BasketballApiService
         if ($league === 'euroleague') {
             return [];
         }
-        
+
         // Accept an optional pre-fetched summary to avoid extra requests
         if ($summary === null) {
             // Try to find a recent game for the team to inspect roster statuses (last 3 days)
@@ -1661,7 +1810,7 @@ class BasketballApiService
         if ($league === 'euroleague') {
             return [];
         }
-        
+
         $results = [];
         $daysScanned = 0;
         $maxDays = 14; // Reduzir para evitar timeouts (era 30)
@@ -1734,8 +1883,9 @@ class BasketballApiService
         if ($league === 'euroleague') {
             return [];
         }
-        
+
         $matches = [];
+        $seenEventIds = []; // Track seen event IDs to avoid duplicates
         $daysScanned = 0;
         $maxDays = 60; // Reduzir para evitar timeouts (era 180)
         $chunkSize = 3; // Reduzir requests paralelos (era 7)
@@ -1765,6 +1915,11 @@ class BasketballApiService
                 if (!$scoreboard || !isset($scoreboard['events'])) continue;
 
                 foreach ($scoreboard['events'] as $event) {
+                    $eventId = $event['id'] ?? null;
+
+                    // Skip if we've already seen this event
+                    if (!$eventId || in_array($eventId, $seenEventIds)) continue;
+
                     if (!isset($event['status']['type']['completed']) || $event['status']['type']['completed'] !== true) continue;
                     $comps = $event['competitions'][0] ?? null;
                     if (!$comps || !isset($comps['competitors'])) continue;
@@ -1778,6 +1933,8 @@ class BasketballApiService
                             if ((string)($c['team']['id'] ?? '') === (string)$teamBId) $b = $c;
                         }
                         if (!$a || !$b) continue;
+
+                        $seenEventIds[] = $eventId; // Mark as seen
                         $matches[] = [
                             'date' => $event['date'] ?? null,
                             'teamA' => $a['team']['displayName'] ?? null,
@@ -1809,33 +1966,33 @@ class BasketballApiService
                 return [];
             }
         }
-        
+
         $cacheKey = "standings_{$league}";
         return Cache::remember($cacheKey, 1800, function () use ($league, $summary) {
             try {
                 // First, try the dedicated standings endpoint
                 $standings = $this->makeRequest($league, 'standings', []);
-                
+
                 // ESPN API returns data in 'children' array
                 if ($standings && isset($standings['children'])) {
                     $records = [];
-                    
+
                     foreach ($standings['children'] as $conference) {
                         if (!isset($conference['standings']['entries'])) {
                             continue;
                         }
-                        
+
                         foreach ($conference['standings']['entries'] as $entry) {
                             $team = $entry['team'] ?? [];
                             $stats = $entry['stats'] ?? [];
-                            
+
                             // Extract key stats
                             $wins = 0;
                             $losses = 0;
                             $winPct = 0;
                             $gamesBehind = '-';
                             $streak = '';
-                            
+
                             foreach ($stats as $stat) {
                                 $statName = $stat['name'] ?? '';
                                 if ($statName === 'wins') $wins = (int)$stat['value'];
@@ -1844,7 +2001,7 @@ class BasketballApiService
                                 if ($statName === 'gamesBehind') $gamesBehind = $stat['displayValue'] ?? '-';
                                 if ($statName === 'streak') $streak = $stat['displayValue'] ?? '';
                             }
-                            
+
                             $records[] = [
                                 'position' => count($records) + 1,
                                 'team' => [
@@ -1862,7 +2019,7 @@ class BasketballApiService
                             ];
                         }
                     }
-                    
+
                     if (count($records) > 0) {
                         \Log::info("Standings from children array", ['count' => count($records)]);
                         return $records;
@@ -1871,45 +2028,52 @@ class BasketballApiService
 
                 // Fallback: Extract standings from recent games in scoreboard
                 \Log::info("Standings endpoint empty, extracting from scoreboard for {$league}");
-                
-                $scoreboard = $this->makeRequest($league, 'scoreboard', []);
-                if ($scoreboard && isset($scoreboard['events'])) {
-                    $teamsMap = [];
-                    
+
+                // Aggregate teams from multiple days to get all teams
+                $teamsMap = [];
+                $daysToAggregate = 10; // Look at last 10 days to get all teams
+
+                for ($i = 1; $i <= $daysToAggregate; $i++) {
+                    $date = now()->subDays($i)->format('Ymd');
+                    $scoreboard = $this->makeRequest($league, 'scoreboard', ['dates' => $date]);
+
+                    if (!$scoreboard || !isset($scoreboard['events'])) continue;
+
                     // NBA conference mapping (based on official NBA divisions)
-                    // EASTERN: Atlantic(2,17,18,20,28), Central(4,5,8,11,15), Southeast(1,14,19,27,30)
-                    // Note: Some ESPN IDs don't match standard - using actual team names for validation
                     $easternTeams = [
-                        1,  // Atlanta Hawks (Southeast)
-                        2,  // Boston Celtics (Atlantic)
-                        4,  // Chicago Bulls (Central)
-                        8,  // Detroit Pistons (Central)
-                        15, // Milwaukee Bucks (Central)
-                        17, // Brooklyn Nets (Atlantic)
-                        18, // New York Knicks (Atlantic)
-                        19, // Orlando Magic (Southeast - ESPN ID is 19, not 20!)
-                        20, // Philadelphia 76ers (Atlantic - ESPN ID is 20, not 21!)
-                        27, // Washington Wizards (Southeast - ESPN ID is 27, not 28!)
-                        28, // Toronto Raptors (Atlantic - ESPN ID is 28, not 26!)
-                        30, // Charlotte Hornets (Southeast)
-                        5,  // Cleveland Cavaliers (Central)
-                        11, // Indiana Pacers (Central)
-                        14, // Miami Heat (Southeast)
+                        1,  // Atlanta Hawks
+                        2,  // Boston Celtics
+                        4,  // Chicago Bulls
+                        5,  // Cleveland Cavaliers
+                        8,  // Detroit Pistons
+                        11, // Indiana Pacers
+                        14, // Miami Heat
+                        15, // Milwaukee Bucks
+                        17, // Brooklyn Nets
+                        18, // New York Knicks
+                        19, // Orlando Magic
+                        20, // Philadelphia 76ers
+                        27, // Washington Wizards
+                        28, // Toronto Raptors
+                        30, // Charlotte Hornets
                     ];
-                    
+
                     // Extract records from all games
                     foreach ($scoreboard['events'] as $event) {
                         if (!isset($event['competitions'][0]['competitors'])) continue;
-                        
+
                         foreach ($event['competitions'][0]['competitors'] as $competitor) {
                             $team = $competitor['team'] ?? [];
                             $teamId = $team['id'] ?? null;
-                            
+
                             if (!$teamId) continue;
-                            
+
+                            // Skip if we already have this team
+                            if (isset($teamsMap[$teamId])) continue;
+
                             // Determine conference
                             $conference = in_array((int)$teamId, $easternTeams) ? 'Eastern Conference' : 'Western Conference';
-                            
+
                             // Extract overall record
                             $overallRecord = null;
                             if (isset($competitor['records'])) {
@@ -1920,7 +2084,7 @@ class BasketballApiService
                                     }
                                 }
                             }
-                            
+
                             if ($overallRecord && isset($overallRecord['summary'])) {
                                 // Parse "W-L" format (e.g., "28-9")
                                 $parts = explode('-', $overallRecord['summary']);
@@ -1928,7 +2092,7 @@ class BasketballApiService
                                     $wins = (int)$parts[0];
                                     $losses = (int)$parts[1];
                                     $winPct = ($wins + $losses) > 0 ? $wins / ($wins + $losses) : 0;
-                                    
+
                                     $teamsMap[$teamId] = [
                                         'id' => $teamId,
                                         'team' => [
@@ -1948,50 +2112,118 @@ class BasketballApiService
                             }
                         }
                     }
-                    
-                    if (count($teamsMap) > 0) {
-                        // Separate by conference and sort each
-                        $eastern = [];
-                        $western = [];
-                        
-                        foreach ($teamsMap as $team) {
-                            if ($team['conference'] === 'Eastern Conference') {
-                                $eastern[] = $team;
-                            } else {
-                                $western[] = $team;
-                            }
-                        }
-                        
-                        // Sort each conference by win percentage
-                        $sortFunc = function($a, $b) {
-                            if ($a['winPercentage'] != $b['winPercentage']) {
-                                return $b['winPercentage'] <=> $a['winPercentage'];
-                            }
-                            return $b['wins'] <=> $a['wins'];
-                        };
-                        
-                        usort($eastern, $sortFunc);
-                        usort($western, $sortFunc);
-                        
-                        // Add positions within each conference
-                        foreach ($eastern as $idx => &$team) {
-                            $team['position'] = $idx + 1;
-                        }
-                        foreach ($western as $idx => &$team) {
-                            $team['position'] = $idx + 1;
-                        }
-                        
-                        // Merge both conferences
-                        $records = array_merge($eastern, $western);
-                        
-                        \Log::info("Standings extracted from scoreboard", [
-                            'total' => count($records),
-                            'eastern' => count($eastern),
-                            'western' => count($western)
-                        ]);
-                        
-                        return $records;
+
+                    // Stop if we have all 30 NBA teams
+                    if (count($teamsMap) >= 30) {
+                        \Log::info("Found all NBA teams", ['days_searched' => $i]);
+                        break;
                     }
+                }
+
+                if ($teamsMap && count($teamsMap) > 0) {
+                    // Calcular streaks (últimos jogos)
+                    $teamGames = [];
+                    foreach ($scoreboard['events'] as $event) {
+                        foreach ($event['competitions'][0]['competitors'] as $competitor) {
+                            $team = $competitor['team'] ?? [];
+                            $teamId = $team['id'] ?? null;
+                            if (!$teamId) continue;
+                            if (!isset($teamGames[$teamId])) $teamGames[$teamId] = [];
+                            $score = (int)($competitor['score'] ?? 0);
+                            // Find opponent
+                            foreach ($event['competitions'][0]['competitors'] as $opp) {
+                                if (($opp['team']['id'] ?? null) != $teamId) {
+                                    $oppScore = (int)($opp['score'] ?? 0);
+                                    break;
+                                }
+                            }
+                            $isWin = $score > ($oppScore ?? 0);
+                            $teamGames[$teamId][] = $isWin ? 'W' : 'L';
+                        }
+                    }
+
+                    // Separate by conference and sort each
+                    $eastern = [];
+                    $western = [];
+
+                    foreach ($teamsMap as &$team) {
+                        // Calcular streak igual Euroleague
+                        $streak = '-';
+                        $tid = $team['id'];
+                        if (!empty($teamGames[$tid])) {
+                            $results = array_reverse($teamGames[$tid]);
+                            $last = $results[0] ?? null;
+                            $count = 0;
+                            foreach ($results as $r) {
+                                if ($r === $last) $count++;
+                                else break;
+                            }
+                            if ($last && $count > 0) $streak = $last . $count;
+                        }
+                        $team['streak'] = $streak;
+
+                        // Calcular gamesBehind igual Euroleague
+                        // Encontrar líder (maior wins, menor losses) por conferência
+                        // Só calcular depois de separar por conferência, então fazemos depois
+
+                        if ($team['conference'] === 'Eastern Conference') {
+                            $eastern[] = $team;
+                        } else {
+                            $western[] = $team;
+                        }
+                    }
+                    unset($team); // break reference
+
+                    // Calcular gamesBehind para cada conferência
+                    $calcGamesBehind = function(&$confTeams) {
+                        if (empty($confTeams)) return;
+                        // Ordenar por wins desc, losses asc
+                        usort($confTeams, function($a, $b) {
+                            if ($a['wins'] != $b['wins']) return $b['wins'] <=> $a['wins'];
+                            return $a['losses'] <=> $b['losses'];
+                        });
+                        $maxWins = $confTeams[0]['wins'] ?? 0;
+                        $maxLosses = $confTeams[0]['losses'] ?? 0;
+                        foreach ($confTeams as &$team) {
+                            $team['gamesBehind'] = ($team['wins'] === $maxWins && $team['losses'] === $maxLosses)
+                                ? '0.0'
+                                : number_format((($maxWins - $team['wins']) + ($team['losses'] - $maxLosses)) / 2, 1);
+                        }
+                        unset($team);
+                    };
+                    $calcGamesBehind($eastern);
+                    $calcGamesBehind($western);
+                    unset($team); // break reference
+
+                    // Sort each conference by win percentage
+                    $sortFunc = function($a, $b) {
+                        if ($a['winPercentage'] != $b['winPercentage']) {
+                            return $b['winPercentage'] <=> $a['winPercentage'];
+                        }
+                        return $b['wins'] <=> $a['wins'];
+                    };
+
+                    usort($eastern, $sortFunc);
+                    usort($western, $sortFunc);
+
+                    // Add positions within each conference
+                    foreach ($eastern as $idx => &$team) {
+                        $team['position'] = $idx + 1;
+                    }
+                    foreach ($western as $idx => &$team) {
+                        $team['position'] = $idx + 1;
+                    }
+
+                    // Merge both conferences
+                    $records = array_merge($eastern, $western);
+
+                    \Log::info("Standings extracted from scoreboard", [
+                        'total' => count($records),
+                        'eastern' => count($eastern),
+                        'western' => count($western)
+                    ]);
+
+                    return $records;
                 }
             } catch (\Exception $e) {
                 \Log::error("Failed to fetch standings for {$league}: " . $e->getMessage());
@@ -1999,9 +2231,10 @@ class BasketballApiService
 
             // No standings available
             \Log::warning("No standings data available for {$league}");
-            return null;
+            return [];
         });
     }
+
 
     /**
      * Fetch multiple scoreboard endpoints in parallel for given dates.
@@ -2130,17 +2363,17 @@ class BasketballApiService
         usort($results, function($a, $b) use ($query) {
             $aName = strtolower($a['fullName']);
             $bName = strtolower($b['fullName']);
-            
+
             // Exact match
             if ($aName === $query && $bName !== $query) return -1;
             if ($bName === $query && $aName !== $query) return 1;
-            
+
             // Starts with query
             $aStarts = str_starts_with($aName, $query);
             $bStarts = str_starts_with($bName, $query);
             if ($aStarts && !$bStarts) return -1;
             if ($bStarts && !$aStarts) return 1;
-            
+
             // Alphabetical
             return strcmp($aName, $bName);
         });
@@ -2149,56 +2382,76 @@ class BasketballApiService
     }
 
     /**
-     * Search NBA players using ESPN scoreboard data and top performers
+     * Search NBA players by fetching team rosters and filtering
      */
-    private function searchNbaPlayers(string $query): array
+    public function searchNbaPlayers(string $query): array
     {
         $results = [];
-        $query = strtolower($query);
+        $query = strtolower(trim($query));
 
-        // Get recent games to extract player names
-        $scoreboard = $this->makeRequest('nba', 'scoreboard', []);
-        
-        if (isset($scoreboard['events'])) {
-            foreach ($scoreboard['events'] as $event) {
-                if (!isset($event['competitions'][0]['competitors'])) continue;
-                
-                foreach ($event['competitions'][0]['competitors'] as $competitor) {
-                    if (!isset($competitor['leaders'])) continue;
-                    
-                    // Check points, rebounds, assists leaders
-                    foreach ($competitor['leaders'] as $statLeader) {
-                        if (!isset($statLeader['leaders'])) continue;
-                        
-                        foreach ($statLeader['leaders'] as $leader) {
-                            $player = $leader['athlete'] ?? null;
-                            if (!$player) continue;
-                            
-                            $fullName = $player['displayName'] ?? $player['fullName'] ?? '';
-                            $searchName = strtolower($fullName);
-                            
-                            // Check if query matches
-                            if (empty($query) || str_contains($searchName, $query)) {
-                                $playerId = $player['id'] ?? null;
-                                if ($playerId && !isset($results[$playerId])) {
-                                    $results[$playerId] = [
+        // Cache key for all NBA players (refresh every 24 hours)
+        $cacheKey = 'nba_all_players';
+
+        $allPlayers = Cache::remember($cacheKey, 86400, function () {
+            $players = [];
+
+            try {
+                // Get all NBA teams
+                $teamsData = $this->getTeams('nba');
+                $teams = $teamsData['response'] ?? [];
+                \Log::info('Player search: Found ' . count($teams) . ' NBA teams');
+
+                foreach ($teams as $team) {
+                    $teamId = $team['id'] ?? null;
+                    if (!$teamId) continue;
+
+                    try {
+                        // Get team roster
+                        $roster = $this->makeRequest('nba', "teams/{$teamId}/roster", []);
+
+                        if (isset($roster['athletes'])) {
+                            \Log::info("Team {$teamId} ({$team['name']}): " . count($roster['athletes']) . " players");
+
+                            foreach ($roster['athletes'] as $athlete) {
+                                $playerId = $athlete['id'] ?? null;
+                                $fullName = $athlete['displayName'] ?? $athlete['fullName'] ?? '';
+
+                                if ($playerId && $fullName) {
+                                    $players[$playerId] = [
                                         'id' => $playerId,
-                                        'name' => $player['shortName'] ?? $fullName,
+                                        'name' => $athlete['shortName'] ?? $athlete['lastName'] ?? $fullName,
                                         'fullName' => $fullName,
-                                        'team' => $competitor['team']['displayName'] ?? '',
+                                        'team' => $team['name'] ?? '',
                                         'league' => 'nba',
-                                        'position' => $player['position']['abbreviation'] ?? null,
-                                        'image' => $player['headshot']['href'] ?? null,
-                                        'number' => $player['jersey'] ?? null,
+                                        'position' => $athlete['position']['abbreviation'] ?? $athlete['position']['name'] ?? null,
+                                        'image' => $athlete['headshot']['href'] ?? null,
+                                        'number' => $athlete['jersey'] ?? null,
                                     ];
                                 }
                             }
                         }
+                    } catch (\Exception $e) {
+                        \Log::warning("Failed to fetch roster for team {$teamId}: " . $e->getMessage());
+                        continue;
                     }
                 }
+
+                \Log::info('Player search: Total NBA players loaded: ' . count($players));
+            } catch (\Exception $e) {
+                \Log::error('Failed to fetch NBA players: ' . $e->getMessage());
+            }
+
+            return $players;
+        });
+
+        // Filter players by query
+        foreach ($allPlayers as $player) {
+            $fullName = strtolower($player['fullName']);
+            if (str_contains($fullName, $query)) {
+                $results[] = $player;
             }
         }
 
-        return array_values($results);
+        return $results;
     }
 }

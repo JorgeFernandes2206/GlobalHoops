@@ -8,9 +8,6 @@ use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
-    /**
-     * Store a new comment
-     */
     public function store(Request $request)
     {
         \Log::info('Comment store request received', [
@@ -20,7 +17,7 @@ class CommentController extends Controller
 
         $validated = $request->validate([
             'commentable_type' => 'required|string',
-            'commentable_id' => 'required', // Can be string or integer
+            'commentable_id' => 'required',
             'parent_id' => 'nullable|exists:comments,id',
             'content' => 'required|string|min:1|max:5000',
         ]);
@@ -40,12 +37,8 @@ class CommentController extends Controller
         return back()->with('success', 'Comment posted successfully!');
     }
 
-    /**
-     * Delete a comment
-     */
     public function destroy(Comment $comment)
     {
-        // Check if user can delete
         if (!$comment->canDelete(Auth::user())) {
             return back()->with('error', 'You can only delete your own comments.');
         }
@@ -55,9 +48,6 @@ class CommentController extends Controller
         return back()->with('success', 'Comment deleted successfully!');
     }
 
-    /**
-     * Get comments for a specific item (API endpoint)
-     */
     public function index(Request $request)
     {
         $validated = $request->validate([

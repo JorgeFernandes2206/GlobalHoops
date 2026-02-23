@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Bell, Flame, TrendingUp, Trophy, Clock, Newspaper, Activity, Sparkles, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -6,7 +5,7 @@ export default function NotificationsSidebar({ notifications, liveGames, upcomin
     // Generate smart notifications from real data
     const smartNotifications = useMemo(() => {
         const notifs = [];
-        
+
         // 1. GAME HIGHLIGHTS & UPDATES
         if (liveGames && liveGames.length > 0) {
             liveGames.slice(0, 2).forEach(game => {
@@ -34,7 +33,7 @@ export default function NotificationsSidebar({ notifications, liveGames, upcomin
                 const gameDate = new Date(nextGame.date);
                 const now = new Date();
                 const hoursUntil = Math.floor((gameDate - now) / (1000 * 60 * 60));
-                
+
                 if (hoursUntil >= 0 && hoursUntil <= 3) {
                     const homeTeam = nextGame.teams?.home?.name || 'Team';
                     const awayTeam = nextGame.teams?.away?.name || 'Team';
@@ -61,7 +60,7 @@ export default function NotificationsSidebar({ notifications, liveGames, upcomin
                 const points = topPlayer.points || 0;
                 const assists = topPlayer.assists || 0;
                 const rebounds = topPlayer.rebounds || 0;
-                
+
                 // Check for outstanding performance
                 if (points >= 30 || (points >= 20 && assists >= 10 && rebounds >= 10)) {
                     const isTripleDouble = points >= 10 && assists >= 10 && rebounds >= 10;
@@ -104,7 +103,7 @@ export default function NotificationsSidebar({ notifications, liveGames, upcomin
             if (latestNews) {
                 const publishedDate = new Date(latestNews.published);
                 const hoursAgo = Math.floor((new Date() - publishedDate) / (1000 * 60 * 60));
-                
+
                 if (hoursAgo <= 6) {
                     notifs.push({
                         id: `news-${latestNews.id}`,
@@ -187,7 +186,7 @@ export default function NotificationsSidebar({ notifications, liveGames, upcomin
             {/* Animated Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <div className="absolute inset-0 shadow-inner shadow-indigo-500/10" />
-            
+
             <div className="relative">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
@@ -215,18 +214,15 @@ export default function NotificationsSidebar({ notifications, liveGames, upcomin
                 <div className="space-y-3">
                     {smartNotifications.map((notification, index) => {
                         const IconComponent = notification.icon;
-                        
+
                         return (
-                            <motion.div
+                            <div
                                 key={notification.id}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="group/notif relative"
+                                className="group/notif relative transition-all duration-300"
                             >
                                 {/* Hover Glow */}
                                 <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/0 via-indigo-500/20 to-indigo-500/0 rounded-2xl opacity-0 group-hover/notif:opacity-100 blur transition-all duration-300" />
-                                
+
                                 <div className={`relative p-4 bg-gradient-to-br ${notification.bgColor} backdrop-blur-xl rounded-2xl border ${notification.borderColor} group-hover/notif:border-opacity-60 transition-all duration-300 shadow-lg cursor-pointer`}>
                                     <div className="flex items-start gap-3">
                                         {/* Icon */}
@@ -260,7 +256,7 @@ export default function NotificationsSidebar({ notifications, liveGames, upcomin
                                         </div>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </div>
                         );
                     })}
                 </div>

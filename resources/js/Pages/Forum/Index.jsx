@@ -1,6 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { motion } from 'framer-motion';
 import { MessageSquare, Eye, Pin, Lock, Plus } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
 
@@ -20,15 +19,11 @@ export default function ForumIndex({ topics, category }) {
     return (
         <AuthenticatedLayout>
             <Head title="Forum" />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {/* Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center justify-between mb-8"
-                    >
+                    <div className="flex items-center justify-between mb-8 animate-fade-in">
                         <div>
                             <h1 className="text-4xl font-bold text-white mb-2">Forum</h1>
                             <p className="text-gray-400">Discuss basketball with the community</p>
@@ -40,15 +35,10 @@ export default function ForumIndex({ topics, category }) {
                             <Plus size={20} />
                             New Topic
                         </Link>
-                    </motion.div>
+                    </div>
 
                     {/* Categories */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.1 }}
-                        className="mb-6 flex flex-wrap gap-2"
-                    >
+                    <div className="mb-6 flex flex-wrap gap-2 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                         <button
                             onClick={() => filterByCategory(null)}
                             className={`px-4 py-2 rounded-lg transition-all ${
@@ -72,28 +62,19 @@ export default function ForumIndex({ topics, category }) {
                                 {cat.label}
                             </button>
                         ))}
-                    </motion.div>
+                    </div>
 
                     {/* Topics List */}
                     <div className="space-y-4">
                         {topics.data.length === 0 ? (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="text-center py-12 bg-gray-800/50 rounded-lg"
-                            >
+                            <div className="text-center py-12 bg-gray-800/50 rounded-lg animate-fade-in">
                                 <MessageSquare size={48} className="mx-auto text-gray-600 mb-4" />
                                 <p className="text-gray-400 text-lg">No topics yet</p>
                                 <p className="text-gray-500 mt-2">Be the first to start a discussion!</p>
-                            </motion.div>
+                            </div>
                         ) : (
                             topics.data.map((topic, index) => (
-                                <motion.div
-                                    key={topic.id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                >
+                                <div key={topic.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
                                     <Link
                                         href={route('forum.show', topic.id)}
                                         className="block bg-gray-800/50 hover:bg-gray-800 rounded-lg p-6 transition-all border border-gray-700 hover:border-gray-600"
@@ -147,19 +128,14 @@ export default function ForumIndex({ topics, category }) {
                                             </div>
                                         )}
                                     </Link>
-                                </motion.div>
+                                </div>
                             ))
                         )}
                     </div>
 
                     {/* Pagination */}
                     {topics.last_page > 1 && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="mt-8 flex justify-center gap-2"
-                        >
+                        <div className="mt-8 flex justify-center gap-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                             {topics.links.map((link, index) => (
                                 <button
                                     key={index}
@@ -175,7 +151,7 @@ export default function ForumIndex({ topics, category }) {
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}
-                        </motion.div>
+                        </div>
                     )}
                 </div>
             </div>

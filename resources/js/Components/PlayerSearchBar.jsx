@@ -30,7 +30,7 @@ export default function PlayerSearchBar({ className = '' }) {
         }
 
         setLoading(true);
-        
+
         try {
             const response = await window.axios.get(`/api/players/search?q=${encodeURIComponent(searchQuery)}`);
             setResults(response.data.results || []);
@@ -140,8 +140,8 @@ export default function PlayerSearchBar({ className = '' }) {
                                     <span className="text-xs text-gray-500">#{player.number}</span>
                                 )}
                                 <span className={`px-2 py-1 rounded text-xs font-bold ${
-                                    player.league === 'nba' 
-                                        ? 'bg-blue-500/20 text-blue-400' 
+                                    player.league === 'nba'
+                                        ? 'bg-blue-500/20 text-blue-400'
                                         : 'bg-purple-500/20 text-purple-400'
                                 }`}>
                                     {player.league.toUpperCase()}

@@ -9,7 +9,25 @@
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
+        <link rel="dns-prefetch" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Preload Critical Assets -->
+        @php
+            $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);
+            $appCss = $manifest['resources/js/app.jsx']['css'][0] ?? null;
+            $vendorJs = $manifest['_vendor-D616Ne27.js']['file'] ?? null;
+            $inertiaJs = $manifest['_inertia-C2RNzYob.js']['file'] ?? null;
+        @endphp
+        @if($appCss)
+            <link rel="preload" href="/build/{{ $appCss }}" as="style">
+        @endif
+        @if($vendorJs)
+            <link rel="preload" href="/build/{{ $vendorJs }}" as="script" crossorigin>
+        @endif
+        @if($inertiaJs)
+            <link rel="preload" href="/build/{{ $inertiaJs }}" as="script" crossorigin>
+        @endif
 
         <!-- Scripts -->
         @routes

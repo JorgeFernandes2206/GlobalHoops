@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TeamFollower;
 use App\Services\BasketballApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class TeamFollowerController extends Controller
@@ -16,25 +17,24 @@ class TeamFollowerController extends Controller
         $this->basketballApi = $basketballApi;
     }
 
-    /**
-     * Show all teams available to follow
-     */
     public function index(Request $request)
     {
         $user = auth()->user();
         $followedTeamIds = $user->followedTeamIds();
-        
-        // Obter liga selecionada (default: NBA)
+
         $league = $request->input('league', 'nba');
         $country = $request->input('country', null);
         $validLeagues = ['nba', 'euroleague'];
-        
+
         if (!in_array($league, $validLeagues)) {
             $league = 'nba';
         }
 
-        // Fetch teams from API for selected league
-        $teamsData = $this->basketballApi->getTeams($league, $country);
+        // Cache teams list por 1 hora (lista raramente muda)
+        $cacheKey = "teams.{$league}." . ($country ?? 'all');
+        $teamsData = Cache::remember($cacheKey, 3600, function () use ($league, $country) {
+            return $this->basketballApi->getTeams($league, $country);
+        });
         $teams = collect($teamsData['response'] ?? [])->map(function ($team) use ($followedTeamIds) {
             return [
                 'id' => (string)$team['id'],
@@ -48,8 +48,7 @@ class TeamFollowerController extends Controller
                 'is_following' => in_array((string)$team['id'], $followedTeamIds),
             ];
         });
-        
-        // Get available countries for Europe filter
+
         $availableCountries = [];
         if ($league === 'euroleague') {
             $euroleagueService = app(\App\Services\EuroleagueService::class);
@@ -67,42 +66,8 @@ class TeamFollowerController extends Controller
             ],
             'availableCountries' => $availableCountries,
         ]);
-    }    /**
-     * Show teams that user follows
-     */
-    public function following()
-    {
-        $user = auth()->user();
-        $followers = $user->teamFollowers()->get();
-
-        // Fetch teams from both NBA and Euroleague
-        $nbaTeams = collect($this->basketballApi->getTeams('nba')['response'] ?? []);
-        $euroleagueTeams = collect($this->basketballApi->getTeams('euroleague')['response'] ?? []);
-        $allTeams = $nbaTeams->concat($euroleagueTeams);
-
-        // Match followed teams with API data
-        $followedTeams = $followers->map(function ($follower) use ($allTeams) {
-            $teamData = $allTeams->firstWhere('id', $follower->team_api_id);
-
-            return [
-                'id' => $follower->team_api_id,
-                'name' => $teamData['name'] ?? 'Unknown Team',
-                'abbreviation' => $teamData['abbreviation'] ?? '',
-                'logo_url' => $teamData['logo'] ?? null,
-                'league' => $teamData['league'] ?? 'Unknown',
-                'notifications_enabled' => $follower->notifications_enabled,
-                'followed_at' => $follower->created_at,
-            ];
-        });
-
-        return Inertia::render('Teams/Following', [
-            'teams' => $followedTeams,
-        ]);
     }
 
-    /**
-     * Follow a team
-     */
     public function follow(Request $request)
     {
         $request->validate([
@@ -125,9 +90,6 @@ class TeamFollowerController extends Controller
         return back()->with('success', 'You are now following this team');
     }
 
-    /**
-     * Unfollow a team
-     */
     public function unfollow(Request $request)
     {
         $request->validate([
@@ -150,9 +112,6 @@ class TeamFollowerController extends Controller
         return redirect()->back();
     }
 
-    /**
-     * Toggle notifications for a team
-     */
     public function toggleNotifications(Request $request)
     {
         $request->validate([
@@ -175,9 +134,6 @@ class TeamFollowerController extends Controller
         return back()->with('success', "Notifications {$status}");
     }
 
-    /**
-     * Show feed of updates from followed teams
-     */
     public function feed()
     {
         $user = auth()->user();
@@ -191,7 +147,7 @@ class TeamFollowerController extends Controller
             ]);
         }
 
-        // Fetch NBA teams from API
+        // Busca jogos NBA da API
         $teamsData = $this->basketballApi->getTeams('nba');
         $allTeams = collect($teamsData['response'] ?? []);
 
@@ -207,14 +163,11 @@ class TeamFollowerController extends Controller
             ];
         })->values();
 
-        // Fetch news for followed teams
         $news = $this->basketballApi->getTeamsNews($followedTeamIds, 'nba', 15);
 
-        // Fetch recent games (last 3 days) and upcoming games (next 3 days)
         $recentGames = $this->basketballApi->getFinishedGames(3);
         $upcomingGames = $this->basketballApi->getUpcomingGames(3);
 
-        // Filter games to only include followed teams
         $relevantGames = [];
 
         foreach (($recentGames['response'] ?? []) as $game) {
@@ -235,10 +188,8 @@ class TeamFollowerController extends Controller
             }
         }
 
-        // Combine all updates
         $updates = array_merge($news, $relevantGames);
 
-        // Sort by date (most recent first)
         usort($updates, function($a, $b) {
             $dateA = $a['published'] ?? $a['date'] ?? '';
             $dateB = $b['published'] ?? $b['date'] ?? '';

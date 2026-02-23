@@ -1,5 +1,4 @@
 ﻿import { Head, Link } from '@inertiajs/react';
-import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Users, Calendar, Trophy, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import HeroGame from '@/Components/Dashboard/HeroGame';
@@ -127,11 +126,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
                     {/* Hero Score Card */}
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-800/90 via-gray-800/70 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-2xl"
-                    >
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-800/90 via-gray-800/70 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-2xl animate-fade-in" style={{animationDelay: '0s'}}>
                         <div className="absolute inset-0 bg-gradient-to-r from-gold/5 to-transparent" />
 
                         <div className="relative p-8">
@@ -149,7 +144,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                     <div className="relative">
                                         {awayTeam.team?.logo && (
                                             <div className="w-28 h-28 rounded-2xl bg-gray-900/50 border border-gray-700/30 p-4 backdrop-blur-sm hover:scale-105 transition-transform duration-300">
-                                                <img src={awayTeam.team.logo} alt={awayTeam.team.displayName} className="w-full h-full object-contain" />
+                                                <img src={awayTeam.team.logo} alt={awayTeam.team.displayName} className="w-full h-full object-contain" loading="lazy" />
                                             </div>
                                         )}
                                     </div>
@@ -187,7 +182,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                     <div className="relative">
                                         {homeTeam.team?.logo && (
                                             <div className="w-28 h-28 rounded-2xl bg-gray-900/50 border border-gray-700/30 p-4 backdrop-blur-sm hover:scale-105 transition-transform duration-300">
-                                                <img src={homeTeam.team.logo} alt={homeTeam.team.displayName} className="w-full h-full object-contain" />
+                                                <img src={homeTeam.team.logo} alt={homeTeam.team.displayName} className="w-full h-full object-contain" loading="lazy" />
                                             </div>
                                         )}
                                     </div>
@@ -218,7 +213,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                     <td className="py-3 text-left pl-4">
                                                         <div className="flex items-center gap-2">
                                                             {awayTeam.team?.logo && (
-                                                                <img src={awayTeam.team.logo} alt="" className="w-5 h-5" />
+                                                                <img src={awayTeam.team.logo} alt="" className="w-5 h-5" loading="lazy" />
                                                             )}
                                                             <span className="font-medium text-white">{awayTeam.team?.abbreviation}</span>
                                                         </div>
@@ -232,7 +227,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                     <td className="py-3 text-left pl-4">
                                                         <div className="flex items-center gap-2">
                                                             {homeTeam.team?.logo && (
-                                                                <img src={homeTeam.team.logo} alt="" className="w-5 h-5" />
+                                                                <img src={homeTeam.team.logo} alt="" className="w-5 h-5" loading="lazy" />
                                                             )}
                                                             <span className="font-medium text-white">{homeTeam.team?.abbreviation}</span>
                                                         </div>
@@ -248,16 +243,11 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                 </div>
                             )}
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Betting Odds Card */}
-                    {odds && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden"
-                        >
+                    {odds && odds.providers && odds.providers.length > 0 ? (
+                        <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden animate-fade-in" style={{animationDelay: '0.1s'}}>
                             <div className="bg-gradient-to-r from-gold/10 to-transparent px-6 py-4 border-b border-gray-700/30">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -277,7 +267,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                     {(odds.providers || []).slice(0, 6).map((provider, idx) => (
                                         <div key={idx} className="group relative p-4 rounded-xl bg-gray-900/50 border border-gray-700/30 hover:border-gold/30 transition-all duration-300 hover:shadow-lg hover:shadow-gold/5">
                                             <div className="text-xs font-bold text-gold mb-3 uppercase tracking-wide">
-                                                {provider.title || provider.key || 'Sportsbook'}
+                                                {(provider.title || provider.key || 'Sportsbook').replace(/\s*\([A-Z]{2}\)\s*/g, '')}
                                             </div>
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-center">
@@ -291,7 +281,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-xs text-gray-400">Spread</span>
                                                     <span className="text-sm font-medium text-gray-300">
-                                                        {provider.homeSpread !== undefined
+                                                        {provider.homeSpread !== undefined && provider.homeSpread !== null
                                                             ? `${provider.homeSpread > 0 ? '+' : ''}${provider.homeSpread}`
                                                             : '-'}
                                                     </span>
@@ -307,68 +297,76 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                     ))}
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
+                    ) : (
+                        <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden animate-fade-in" style={{animationDelay: '0.1s'}}>
+                            <div className="bg-gradient-to-r from-gray-700/10 to-transparent px-6 py-4 border-b border-gray-700/30">
+                                <div className="flex items-center gap-3">
+                                    <TrendingUp className="w-5 h-5 text-gray-400" />
+                                    <h3 className="text-lg font-bold text-white">Betting Odds</h3>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                    <div className="w-16 h-16 rounded-full bg-gray-800/50 flex items-center justify-center mb-4">
+                                        <TrendingUp className="w-8 h-8 text-gray-500" />
+                                    </div>
+                                    <p className="text-gray-400 text-sm mb-2">Odds not available yet</p>
+                                    <p className="text-gray-500 text-xs max-w-md">
+                                        Betting odds will be available closer to game time. Check back later for updated odds from various sportsbooks.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     )}
 
                     {/* Navigation Tabs */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden"
-                    >
-                        <div className="flex border-b border-gray-700/30 bg-gray-900/30">
-                            <button
-                                onClick={() => setActiveTab('boxscore')}
-                                className={`relative flex-1 px-8 py-5 text-sm font-bold transition-all duration-300 ${
-                                    activeTab === 'boxscore'
-                                        ? 'text-white'
-                                        : 'text-gray-400 hover:text-white'
-                                }`}
-                            >
-                                <div className="flex items-center justify-center gap-2">
-                                    <Users className="w-4 h-4" />
-                                    <span>Player Statistics</span>
-                                </div>
-                                {activeTab === 'boxscore' && (
-                                    <motion.div
-                                        layoutId="activeTab"
-                                        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-gold to-yellow-600"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                )}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('stats')}
-                                className={`relative flex-1 px-8 py-5 text-sm font-bold transition-all duration-300 ${
-                                    activeTab === 'stats'
-                                        ? 'text-white'
-                                        : 'text-gray-400 hover:text-white'
-                                }`}
-                            >
-                                <div className="flex items-center justify-center gap-2">
-                                    <TrendingUp className="w-4 h-4" />
-                                    <span>Game Statistics</span>
-                                </div>
-                                {activeTab === 'stats' && (
-                                    <motion.div
-                                        layoutId="activeTab"
-                                        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-gold to-yellow-600"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                    />
-                                )}
-                            </button>
-                        </div>
+                    {(awayBoxscore?.statistics?.[0]?.athletes || homeBoxscore?.statistics?.[0]?.athletes) && (
+                        <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden animate-fade-in" style={{animationDelay: '0.2s'}}>
+                            <div className="flex border-b border-gray-700/30 bg-gray-900/30">
+                                <button
+                                    onClick={() => setActiveTab('boxscore')}
+                                    className={`relative flex-1 px-8 py-5 text-sm font-bold transition-all duration-300 ${
+                                        activeTab === 'boxscore'
+                                            ? 'text-white'
+                                            : 'text-gray-400 hover:text-white'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Users className="w-4 h-4" />
+                                        <span>Player Statistics</span>
+                                    </div>
+                                    {activeTab === 'boxscore' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-gold to-yellow-600" />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('stats')}
+                                    className={`relative flex-1 px-8 py-5 text-sm font-bold transition-all duration-300 ${
+                                        activeTab === 'stats'
+                                            ? 'text-white'
+                                            : 'text-gray-400 hover:text-white'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-center gap-2">
+                                        <TrendingUp className="w-4 h-4" />
+                                        <span>Game Statistics</span>
+                                    </div>
+                                    {activeTab === 'stats' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-gold to-yellow-600" />
+                                    )}
+                                </button>
+                            </div>
 
-                        <div className="p-6">
-                            {/* Tab: Boxscore (Player Statistics) */}
-                            {activeTab === 'boxscore' && (
+                            <div className="p-6">
+                                {/* Tab: Boxscore (Player Statistics) - Only for finished games */}
+                            {(awayBoxscore?.statistics?.[0]?.athletes || homeBoxscore?.statistics?.[0]?.athletes) && activeTab === 'boxscore' && (
                                 <div className="space-y-8">
                                     {awayBoxscore?.statistics?.[0]?.athletes && (
                                         <div>
                                             <div className="flex items-center gap-3 mb-4">
                                                 {awayTeam.team?.logo && (
-                                                    <img src={awayTeam.team.logo} alt="" className="w-8 h-8" />
+                                                    <img src={awayTeam.team.logo} alt="" className="w-8 h-8" loading="lazy" />
                                                 )}
                                                 <h3 className="text-xl font-bold text-white">{awayTeam.team?.displayName}</h3>
                                             </div>
@@ -397,7 +395,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                                     <td className="px-4 py-3">
                                                                         <div className="flex items-center gap-3">
                                                                             {awayTeam.team?.logo && (
-                                                                                <img src={awayTeam.team.logo} alt="" className="w-6 h-6 opacity-30" />
+                                                                                <img src={awayTeam.team.logo} alt="" className="w-6 h-6 opacity-30" loading="lazy" />
                                                                             )}
                                                                             <div>
                                                                                 <div className="text-sm font-medium text-white">{player.athlete?.displayName}</div>
@@ -429,7 +427,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
                                                                         {resolvePlayerImage(p) ? (
-                                                                            <img src={resolvePlayerImage(p)} alt={p.athlete?.displayName} className="w-full h-full object-cover" />
+                                                                            <img src={resolvePlayerImage(p)} alt={p.athlete?.displayName} className="w-full h-full object-cover" loading="lazy" />
                                                                         ) : (
                                                                             <div className="w-full h-full flex items-center justify-center text-sm text-gray-200">{(p.athlete?.displayName||'').split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
                                                                         )}
@@ -451,7 +449,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                             <div key={idx} className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-700">
-                                                                        {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-200">{(p.name||'').split(' ').map(n=>n[0]).slice(0,2).join('')}</div>}
+                                                                        {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-200">{(p.name||'').split(' ').map(n=>n[0]).slice(0,2).join('')}</div>}
                                                                     </div>
                                                                     <div>
                                                                         <div className="text-sm text-white">{p.name}</div>
@@ -476,7 +474,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
                                                                         {resolvePlayerImage(p) ? (
-                                                                            <img src={resolvePlayerImage(p)} alt={p.athlete?.displayName} className="w-full h-full object-cover" />
+                                                                            <img src={resolvePlayerImage(p)} alt={p.athlete?.displayName} className="w-full h-full object-cover" loading="lazy" />
                                                                         ) : (
                                                                             <div className="w-full h-full flex items-center justify-center text-sm text-gray-200">{(p.athlete?.displayName||'').split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
                                                                         )}
@@ -498,7 +496,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                             <div key={idx} className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-700">
-                                                                        {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-200">{(p.name||'').split(' ').map(n=>n[0]).slice(0,2).join('')}</div>}
+                                                                        {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-200">{(p.name||'').split(' ').map(n=>n[0]).slice(0,2).join('')}</div>}
                                                                     </div>
                                                                     <div>
                                                                         <div className="text-sm text-white">{p.name}</div>
@@ -520,7 +518,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                         <div>
                                             <div className="flex items-center gap-3 mb-4">
                                                 {homeTeam.team?.logo && (
-                                                    <img src={homeTeam.team.logo} alt="" className="w-8 h-8" />
+                                                    <img src={homeTeam.team.logo} alt="" className="w-8 h-8" loading="lazy" />
                                                 )}
                                                 <h3 className="text-xl font-bold text-white">{homeTeam.team?.displayName}</h3>
                                             </div>
@@ -549,7 +547,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                                                     <td className="px-4 py-3">
                                                                         <div className="flex items-center gap-3">
                                                                             {homeTeam.team?.logo && (
-                                                                                <img src={homeTeam.team.logo} alt="" className="w-6 h-6 opacity-30" />
+                                                                                <img src={homeTeam.team.logo} alt="" className="w-6 h-6 opacity-30" loading="lazy" />
                                                                             )}
                                                                             <div>
                                                                                 <div className="text-sm font-medium text-white">{player.athlete?.displayName}</div>
@@ -583,8 +581,8 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                 </div>
                             )}
 
-                            {/* Tab: Team Stats */}
-                            {activeTab === 'stats' && (
+                            {/* Tab: Team Stats - Only for finished games */}
+                            {(awayBoxscore?.statistics || homeBoxscore?.statistics) && activeTab === 'stats' && (
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-bold text-white mb-6">Overall Game Statistics</h3>
 
@@ -594,7 +592,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                             {awayBoxscore?.statistics && (
                                                 <div className="space-y-4">
                                                     <div className="flex items-center gap-3 pb-3 border-b border-gray-700">
-                                                        {awayTeam.team?.logo && <img src={awayTeam.team.logo} alt="" className="w-6 h-6" />}
+                                                        {awayTeam.team?.logo && <img src={awayTeam.team.logo} alt="" className="w-6 h-6" loading="lazy" />}
                                                         <h4 className="font-bold text-white">{awayTeam.team?.displayName}</h4>
                                                     </div>
                                                     {awayBoxscore.statistics[0]?.totals?.map((stat, idx) => (
@@ -610,7 +608,7 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                             {homeBoxscore?.statistics && (
                                                 <div className="space-y-4">
                                                     <div className="flex items-center gap-3 pb-3 border-b border-gray-700">
-                                                        {homeTeam.team?.logo && <img src={homeTeam.team.logo} alt="" className="w-6 h-6" />}
+                                                        {homeTeam.team?.logo && <img src={homeTeam.team.logo} alt="" className="w-6 h-6" loading="lazy" />}
                                                         <h4 className="font-bold text-white">{homeTeam.team?.displayName}</h4>
                                                     </div>
                                                     {homeBoxscore.statistics[0]?.totals?.map((stat, idx) => (
@@ -630,15 +628,12 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                     )}
                                 </div>
                             )}
+                            </div>
                         </div>
-                    </motion.div>
+                    )}
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-8"
-                    >
+                    <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-8 animate-fade-in" style={{animationDelay: '0.3s'}}>
+
                         <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
                             <Trophy className="w-6 h-6 text-gold" />
                             Game Information
@@ -819,36 +814,26 @@ export default function Show({ auth, game, league, injuriesHome = [], injuriesAw
                                 </div>
                             )}
                         </div>
-                    </motion.div>
+                    </div>
 
                     {!awayBoxscore?.statistics && !homeBoxscore?.statistics && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-16 text-center"
-                        >
+                        <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-16 text-center animate-fade-in" style={{animationDelay: '0.4s'}}>
                             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-800/50 flex items-center justify-center">
                                 <Trophy className="w-10 h-10 text-gray-600" />
                             </div>
                             <p className="text-lg text-gray-400 font-medium">Game statistics not yet available</p>
                             <p className="text-sm text-gray-500 mt-2">Check back once the game has started</p>
-                        </motion.div>
+                        </div>
                     )}
 
                     {/* Comments Section */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                        className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-8"
-                    >
-                        <CommentSection 
+                    <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-8 animate-fade-in" style={{animationDelay: '0.5s'}}>
+                        <CommentSection
                             commentableType="Game"
                             commentableId={`${league}_${game?.header?.id || ''}`}
                             initialComments={comments || []}
                         />
-                    </motion.div>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

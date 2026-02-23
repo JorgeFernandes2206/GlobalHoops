@@ -1,9 +1,19 @@
-import { motion } from 'framer-motion';
 import { Link } from '@inertiajs/react';
 import { Trophy, CheckCircle2, ChevronRight } from 'lucide-react';
 
 export default function FinishedGamesGrid({ games }) {
-    if (!games || games.length === 0) {
+    // DEBUG: logar jogos recebidos e arrays filtrados
+    if (typeof window !== 'undefined') {
+        console.log('FinishedGamesGrid received games:', games);
+    }
+    const nbaGames = Array.isArray(games) ? games.filter(g => g.league?.id === 'nba').slice(0, 5) : [];
+    const euroleagueGames = Array.isArray(games) ? games.filter(g => g.league?.id === 'euroleague').slice(0, 5) : [];
+    if (typeof window !== 'undefined') {
+        console.log('NBA finished games:', nbaGames);
+        console.log('Euroleague finished games:', euroleagueGames);
+    }
+    const combinedGames = [...euroleagueGames, ...nbaGames];
+    if ((!nbaGames.length && !euroleagueGames.length)) {
         return (
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm p-8 border border-white/5 h-full">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(34,197,94,0.08),transparent)]" />
@@ -28,27 +38,28 @@ export default function FinishedGamesGrid({ games }) {
 
                 {/* Games List */}
                 <div className="space-y-3">
-                    {games.slice(0, 6).map((game, index) => {
+                    {combinedGames.map((game, index) => {
                         const homeWon = (game.scores?.home?.total || 0) > (game.scores?.away?.total || 0);
                         const awayWon = (game.scores?.away?.total || 0) > (game.scores?.home?.total || 0);
+                        const isEuroleague = game.league?.id === 'euroleague';
 
                         return (
                             <Link
                                 key={game.id}
                                 href={`/games/${game.league?.id || 'nba'}/${game.id}`}
                             >
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className="group/item relative"
-                                >
-                                    <div className="relative p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:from-gray-800/80 hover:to-gray-900/80 rounded-lg border border-white/5 hover:border-green-500/30 transition-all duration-300 shadow-md">
-                                        {/* Final Badge */}
+                                <div className="group/item relative transition-all duration-300">
+                                    <div className={`relative p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:from-gray-800/80 hover:to-gray-900/80 rounded-lg border transition-all duration-300 shadow-md ${isEuroleague ? 'border-yellow-400/60 hover:border-yellow-400/80' : 'border-white/5 hover:border-green-500/30'}`}>
+                                        {/* Final Badge + Euroleague */}
                                         <div className="flex items-center justify-between mb-3">
-                                            <span className="text-xs font-bold text-white bg-gradient-to-r from-green-500/90 to-emerald-500/90 px-3 py-1 rounded-lg shadow-lg shadow-green-500/20">
-                                                FINAL
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-white bg-gradient-to-r from-green-500/90 to-emerald-500/90 px-3 py-1 rounded-lg shadow-lg shadow-green-500/20">
+                                                    FINAL
+                                                </span>
+                                                {isEuroleague && (
+                                                    <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-400 text-xs font-bold rounded-lg ml-2">EUROLEAGUE</span>
+                                                )}
+                                            </div>
                                             <ChevronRight className="w-5 h-5 text-gray-400 group-hover/item:text-green-400 group-hover/item:translate-x-1 transition-all" />
                                         </div>
 
@@ -106,7 +117,7 @@ export default function FinishedGamesGrid({ games }) {
                                             </div>
                                         </div>
                                     </div>
-                                </motion.div>
+                                </div>
                             </Link>
                         );
                     })}

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { MessageCircle, Send, Trash2, Reply, ChevronDown, ChevronUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 function CommentItem({ comment, depth = 0, onReply }) {
     const [showReplies, setShowReplies] = useState(true);
@@ -17,12 +16,7 @@ function CommentItem({ comment, depth = 0, onReply }) {
     const canDelete = auth?.user && comment.user.id === auth.user.id;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className={`${depth > 0 ? 'ml-8 md:ml-12' : ''}`}
-        >
+        <div className={`${depth > 0 ? 'ml-8 md:ml-12' : ''} transition-all duration-300`}>
             <div className="group relative">
                 {/* Linha de conexão para replies */}
                 {depth > 0 && (
@@ -89,15 +83,9 @@ function CommentItem({ comment, depth = 0, onReply }) {
                     </div>
 
                     {/* Reply Form */}
-                    <AnimatePresence>
-                        {isReplying && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="mt-3 pt-3 border-t border-gray-700/50"
-                            >
-                                <CommentForm
+                    {isReplying && (
+                        <div className="mt-3 pt-3 border-t border-gray-700/50 transition-all duration-300">
+                            <CommentForm
                                     commentableType={comment.commentable_type}
                                     commentableId={comment.commentable_id}
                                     parentId={comment.id}
@@ -105,21 +93,14 @@ function CommentItem({ comment, depth = 0, onReply }) {
                                     placeholder="Write a reply..."
                                     compact
                                 />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Nested Replies */}
-            <AnimatePresence>
-                {showReplies && comment.replies && comment.replies.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="mt-3 space-y-3"
-                    >
+            {showReplies && comment.replies && comment.replies.length > 0 && (
+                <div className="mt-3 space-y-3 transition-all duration-300">
                         {comment.replies.map((reply) => (
                             <CommentItem
                                 key={reply.id}
@@ -128,10 +109,9 @@ function CommentItem({ comment, depth = 0, onReply }) {
                                 onReply={onReply}
                             />
                         ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.div>
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -145,7 +125,7 @@ function CommentForm({ commentableType, commentableId, parentId = null, onSucces
 
     const submit = (e) => {
         e.preventDefault();
-        
+
         post(route('comments.store'), {
             preserveScroll: true,
             onSuccess: () => {
@@ -216,23 +196,17 @@ export default function CommentSection({ commentableType, commentableId, comment
 
             {/* Comments List */}
             <div className="space-y-4">
-                <AnimatePresence>
-                    {comments.length === 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="text-center py-12"
-                        >
-                            <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-700" />
-                            <p className="text-gray-400 font-medium">No comments yet</p>
-                            <p className="text-sm text-gray-500 mt-1">Be the first to share your thoughts!</p>
-                        </motion.div>
-                    ) : (
-                        comments.map((comment) => (
-                            <CommentItem key={comment.id} comment={comment} />
-                        ))
-                    )}
-                </AnimatePresence>
+                {comments.length === 0 ? (
+                    <div className="text-center py-12 transition-all duration-300">
+                        <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-700" />
+                        <p className="text-gray-400 font-medium">No comments yet</p>
+                        <p className="text-sm text-gray-500 mt-1">Be the first to share your thoughts!</p>
+                    </div>
+                ) : (
+                    comments.map((comment) => (
+                        <CommentItem key={comment.id} comment={comment} />
+                    ))
+                )}
             </div>
         </div>
     );

@@ -7,16 +7,8 @@ use App\Services\BasketballApiService;
 
 class FetchGameSummary extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * league default is nba. gameId is optional; if omitted the command will try to find a recent finished game.
-     */
     protected $signature = 'fetch:summary {league=nba} {gameId?}';
 
-    /**
-     * The console command description.
-     */
     protected $description = 'Fetch a game summary via BasketballApiService and write to storage/logs for inspection';
 
     public function __construct(private BasketballApiService $basketballApi)
@@ -59,7 +51,6 @@ class FetchGameSummary extends Command
             return 1;
         }
 
-        // Also attempt to parse injuries for the two teams if possible
         try {
             $header = $summary['header'] ?? null;
             $competitions = $header['competitions'][0] ?? null;
@@ -81,7 +72,6 @@ class FetchGameSummary extends Command
                 $injAway = $this->basketballApi->getTeamInjuries($league, $awayId, $summary);
                 $this->info('Away injuries: ' . json_encode($injAway));
             }
-            // Recent results
             if ($homeId) {
                 $recentHome = $this->basketballApi->getTeamRecentResults($league, $homeId, 5, $summary);
                 $this->info('Recent Home: ' . json_encode($recentHome));
@@ -91,7 +81,6 @@ class FetchGameSummary extends Command
                 $this->info('Recent Away: ' . json_encode($recentAway));
             }
 
-            // Head to head
             if ($homeId && $awayId) {
                 $h2h = $this->basketballApi->getHeadToHead($league, $homeId, $awayId, 5, $summary);
                 $this->info('HeadToHead: ' . json_encode($h2h));

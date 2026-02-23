@@ -1,6 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 
 export default function ForumCreate() {
@@ -26,15 +25,11 @@ export default function ForumCreate() {
     return (
         <AuthenticatedLayout>
             <Head title="Create Topic" />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {/* Back Button */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="mb-6"
-                    >
+                    <div className="mb-6 animate-fade-in">
                         <Link
                             href={route('forum.index')}
                             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
@@ -42,17 +37,12 @@ export default function ForumCreate() {
                             <ArrowLeft size={20} />
                             Back to Forum
                         </Link>
-                    </motion.div>
+                    </div>
 
                     {/* Form */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="bg-gray-800/50 rounded-lg p-8 border border-gray-700"
-                    >
+                    <div className="bg-gray-800/50 rounded-lg p-8 border border-gray-700 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                         <h1 className="text-3xl font-bold text-white mb-6">Create New Topic</h1>
-                        
+
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Category */}
                             <div>
@@ -130,7 +120,7 @@ export default function ForumCreate() {
                                 </Link>
                             </div>
                         </form>
-                    </motion.div>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

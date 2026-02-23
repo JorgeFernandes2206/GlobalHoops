@@ -30,7 +30,6 @@ Route::middleware('auth')->group(function () {
 
     // Team Following Routes
     Route::get('/teams', [App\Http\Controllers\TeamFollowerController::class, 'index'])->name('teams.index');
-    Route::get('/teams/following', [App\Http\Controllers\TeamFollowerController::class, 'following'])->name('teams.following');
     Route::get('/teams/feed', [App\Http\Controllers\TeamFollowerController::class, 'feed'])->name('teams.feed');
     Route::post('/teams/follow', [App\Http\Controllers\TeamFollowerController::class, 'follow'])->name('teams.follow');
     Route::post('/teams/unfollow', [App\Http\Controllers\TeamFollowerController::class, 'unfollow'])->name('teams.unfollow');
@@ -72,14 +71,14 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
     Route::get('/standings/{league}', function (App\Services\BasketballApiService $service, string $league, Illuminate\Http\Request $request) {
         try {
             $standings = $service->getStandings($league);
-            
+
             if ($standings === null) {
                 return response()->json([
                     'error' => 'Standings not available for this league',
                     'league' => $league
                 ], 404);
             }
-            
+
             // Filter by conference if requested
             $conference = $request->query('conference');
             if ($conference && $league === 'nba') {
@@ -88,7 +87,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
                     'western' => 'Western Conference'
                 ];
                 $conferenceName = $conferenceMap[$conference] ?? null;
-                
+
                 if ($conferenceName) {
                     $standings = array_filter($standings, function($team) use ($conferenceName) {
                         return isset($team['conference']) && $team['conference'] === $conferenceName;
@@ -96,7 +95,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
                     $standings = array_values($standings); // Re-index array
                 }
             }
-            
+
             return response()->json($standings);
         } catch (\Exception $e) {
             return response()->json([
@@ -108,7 +107,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 
     // Top players aggregation
     Route::get('/players/top', [App\Http\Controllers\PlayerController::class, 'topPlayers']);
-    
+
     // Player search
     Route::get('/players/search', [App\Http\Controllers\PlayerController::class, 'search']);
 });

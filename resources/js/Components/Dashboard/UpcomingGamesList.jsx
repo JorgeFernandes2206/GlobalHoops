@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Link } from '@inertiajs/react';
 import { Calendar, Clock, ChevronRight } from 'lucide-react';
 
@@ -14,7 +13,11 @@ export default function UpcomingGamesList({ games }) {
         return (v > 0 ? `+${v}` : String(v));
     };
 
-    if (!games || games.length === 0) {
+    // Mostrar até 5 NBA e 5 Euroleague
+    const nbaGames = Array.isArray(games) ? games.filter(g => g.league?.id === 'nba').slice(0, 5) : [];
+    const euroleagueGames = Array.isArray(games) ? games.filter(g => g.league?.id === 'euroleague').slice(0, 5) : [];
+    const combinedGames = [...nbaGames, ...euroleagueGames];
+    if (!combinedGames || combinedGames.length === 0) {
         return (
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm p-8 border border-white/5 h-full">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(59,130,246,0.08),transparent)]" />
@@ -39,7 +42,7 @@ export default function UpcomingGamesList({ games }) {
 
                 {/* Games List */}
                 <div className="space-y-4">
-                    {games.slice(0, 6).map((game, index) => {
+                    {combinedGames.map((game, index) => {
                         const gameDate = game.date ? new Date(game.date) : null;
 
                         return (
@@ -47,12 +50,7 @@ export default function UpcomingGamesList({ games }) {
                                 key={game.id}
                                 href={`/games/${game.league?.id || 'nba'}/${game.id}`}
                             >
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className="group/item relative"
-                                >
+                                <div className="group/item relative transition-all duration-300">
                                     <div className="relative p-4 bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:from-gray-800/80 hover:to-gray-900/80 rounded-lg border border-white/5 hover:border-blue-500/30 transition-all duration-300 shadow-md">
                                         <div className="flex items-center justify-between">
                                             {/* Teams */}
@@ -130,7 +128,7 @@ export default function UpcomingGamesList({ games }) {
                                             )}
                                         </div>
                                     </div>
-                                </motion.div>
+                                </div>
                             </Link>
                         );
                     })}

@@ -26,6 +26,7 @@
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/inertia-react": "^0.8.1",
         "framer-motion": "^12.23.22",
-        "lucide-react": "^0.546.0"
+        "lucide-react": "^0.546.0",
+        "puppeteer": "^24.35.0"
     }
 }

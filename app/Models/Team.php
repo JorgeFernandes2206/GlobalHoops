@@ -19,9 +19,6 @@ class Team extends Model
         'description',
     ];
 
-    /**
-     * Get the users that follow this team.
-     */
     public function followers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'team_followers')
@@ -29,9 +26,6 @@ class Team extends Model
                     ->withTimestamps();
     }
 
-    /**
-     * Get followers count
-     */
     public function followersCount(): int
     {
         return $this->followers()->count();

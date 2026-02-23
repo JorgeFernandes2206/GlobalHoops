@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+
 
 export const GameCardSkeleton = () => (
     <div className="p-4 bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-xl rounded-2xl border border-gray-700/40">

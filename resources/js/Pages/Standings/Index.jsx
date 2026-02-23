@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { motion } from 'framer-motion';
 import { TableSkeleton } from '@/Components/SkeletonLoader';
 import { Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -24,6 +23,7 @@ export default function StandingsIndex({ auth }) {
             setStandings(response.data);
         } catch (error) {
             console.error('Error loading standings:', error);
+            setStandings([]);
         } finally {
             setLoading(false);
         }
@@ -71,18 +71,15 @@ export default function StandingsIndex({ auth }) {
                                 NBA
                             </button>
                             <button
-                                onClick={() => setLeague('wnba')}
+                                onClick={() => setLeague('euroleague')}
                                 className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                                    league === 'wnba'
+                                    league === 'euroleague'
                                         ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-lg shadow-orange-500/50'
                                         : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                                 }`}
                             >
-                                WNBA
+                                Euroleague
                             </button>
-                        </div>
-                        <div className="mt-2 text-center text-sm text-gray-500">
-                            Euroleague standings temporarily unavailable
                         </div>
                     </div>
 
@@ -132,16 +129,16 @@ export default function StandingsIndex({ auth }) {
                                                 Team
                                             </th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                                V
+                                                Wins
                                             </th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                                D
+                                                Losses
                                             </th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                                PCT
+                                                Win Percentage
                                             </th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                                GB
+                                                Games Behind
                                             </th>
                                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
                                                 Streak
@@ -150,12 +147,10 @@ export default function StandingsIndex({ auth }) {
                                     </thead>
                                     <tbody className="divide-y divide-gray-700/50">
                                         {standings.map((team, index) => (
-                                            <motion.tr
+                                            <tr
                                                 key={team.id || index}
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: index * 0.03 }}
-                                                className="hover:bg-gray-800/50 transition-colors duration-150"
+                                                className="hover:bg-gray-800/50 transition-colors duration-150 animate-fade-in"
+                                                style={{animationDelay: `${index * 0.03}s`}}
                                             >
                                                 <td className="px-6 py-4">
                                                     <span className={`font-bold ${getPositionColor(team.position || index + 1)}`}>
@@ -201,7 +196,7 @@ export default function StandingsIndex({ auth }) {
                                                         </span>
                                                     </div>
                                                 </td>
-                                            </motion.tr>
+                                            </tr>
                                         ))}
                                     </tbody>
                                 </table>

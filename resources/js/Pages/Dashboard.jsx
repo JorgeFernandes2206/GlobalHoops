@@ -6,7 +6,6 @@ import LiveGamesGrid from '@/Components/Dashboard/LiveGamesGrid';
 import UpcomingGamesList from '@/Components/Dashboard/UpcomingGamesList';
 import FinishedGamesGrid from '@/Components/Dashboard/FinishedGamesGrid';
 import TopPlayersCard from '@/Components/Dashboard/TopPlayersCard';
-import { motion } from 'framer-motion';
 import { Calendar, Clock, Trophy, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 
@@ -28,8 +27,8 @@ export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, 
     }, []);
 
     // Escolher jogo em destaque
-    const featuredGame = liveGames && liveGames.length > 0 
-        ? liveGames[0] 
+    const featuredGame = liveGames && liveGames.length > 0
+        ? liveGames[0]
         : (upcomingGames && upcomingGames.length > 0 ? upcomingGames[0] : null);
 
     return (
@@ -57,26 +56,17 @@ export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, 
                 <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
                     {/* Featured Game - Premium Hero */}
                     {featuredGame && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, ease: "easeOut" }}
-                            className="relative group"
-                        >
+                        <div className="relative group animate-fade-in">
                             <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-blue-500/20 to-purple-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
                             <div className="relative">
                                 <HeroGame game={featuredGame} />
                             </div>
-                        </motion.div>
+                        </div>
                     )}
 
                     {/* Live Games - Premium Section */}
                     {liveGames && liveGames.length > 0 && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-                        >
+                        <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
@@ -96,18 +86,13 @@ export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, 
                                 </Link>
                             </div>
                             <LiveGamesGrid games={liveGames} />
-                        </motion.div>
+                        </div>
                     )}
 
                     {/* Games and Players Grid - Premium Cards */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Upcoming Games */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-                            className="relative group"
-                        >
+                        <div className="relative group animate-fade-in" style={{ animationDelay: '0.2s' }}>
                             <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                             <div className="relative">
                                 <div className="flex items-center justify-between mb-5">
@@ -127,17 +112,12 @@ export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, 
                                         <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                                     </Link>
                                 </div>
-                                <UpcomingGamesList games={(upcomingGames || []).slice(0, 6)} />
+                                <UpcomingGamesList games={upcomingGames || []} />
                             </div>
-                        </motion.div>
+                        </div>
 
                         {/* Recent Results */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-                            className="relative group"
-                        >
+                        <div className="relative group animate-fade-in" style={{ animationDelay: '0.3s' }}>
                             <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                             <div className="relative">
                                 <div className="flex items-center justify-between mb-5">
@@ -157,17 +137,12 @@ export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, 
                                         <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                                     </Link>
                                 </div>
-                                <FinishedGamesGrid games={(finishedGames || []).slice(0, 6)} />
+                                <FinishedGamesGrid games={finishedGames || []} />
                             </div>
-                        </motion.div>
+                        </div>
 
                         {/* Top Players */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
-                            className="relative group"
-                        >
+                        <div className="relative group animate-fade-in" style={{ animationDelay: '0.4s' }}>
                             <div className="absolute -inset-1 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
                             <div className="relative">
                                 <div className="flex items-center justify-between mb-5">
@@ -182,7 +157,7 @@ export default function Dashboard({ liveGames: initialLiveGames, upcomingGames, 
                                 </div>
                                 <TopPlayersCard players={topPlayers || []} />
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { motion } from 'framer-motion';
 import axios from 'axios';
 import { NewsCardSkeleton } from '@/Components/SkeletonLoader';
 
@@ -23,10 +22,10 @@ export default function NewsIndex({ auth }) {
                     limit: 20
                 }
             });
-            
+
             console.log('API Response:', response.data);
             console.log('Is Array?', Array.isArray(response.data));
-            
+
             setNews(response.data || []);
         } catch (error) {
             console.error('Error loading news:', error);
@@ -111,14 +110,11 @@ export default function NewsIndex({ auth }) {
                             ))
                         ) : (
                             Array.isArray(news) && news.map((article, index) => (
-                                <motion.div
+                                <div
                                     key={article.id || index}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl overflow-hidden border border-gray-700/50 hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/20 group"
+                                    className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl overflow-hidden border border-gray-700/50 hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/20 group animate-fade-in"
+                                    style={{ animationDelay: `${index * 0.05}s` }}
                                 >
-                                    {/* Image */}
                                     {article.images && article.images.length > 0 && (
                                         <div className="relative h-48 overflow-hidden">
                                             <img
@@ -128,8 +124,7 @@ export default function NewsIndex({ auth }) {
                                                 className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent opacity-60"></div>
-                                            
-                                            {/* Category Badge */}
+
                                             {article.type && (
                                                 <div className="absolute top-4 left-4">
                                                     <span className="px-3 py-1 bg-orange-600/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full">
@@ -140,26 +135,21 @@ export default function NewsIndex({ auth }) {
                                         </div>
                                     )}
 
-                                    {/* Content */}
                                     <div className="p-6">
-                                        {/* Date */}
                                         <div className="text-gray-400 text-sm mb-3">
                                             {formatDate(article.published)}
                                         </div>
 
-                                        {/* Title */}
                                         <h3 className="text-xl font-bold text-white mb-3 group-hover:text-orange-500 transition-colors duration-200 line-clamp-2">
                                             {article.headline}
                                         </h3>
 
-                                        {/* Description */}
                                         {article.description && (
                                             <p className="text-gray-400 text-sm line-clamp-3 mb-4">
                                                 {article.description}
                                             </p>
                                         )}
 
-                                        {/* Read More Link */}
                                         <a
                                             href={article.links?.web?.href || '#'}
                                             target="_blank"
@@ -172,7 +162,7 @@ export default function NewsIndex({ auth }) {
                                             </svg>
                                         </a>
                                     </div>
-                                </motion.div>
+                                </div>
                             ))
                         )}
                     </div>

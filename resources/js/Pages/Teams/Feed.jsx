@@ -1,6 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
-import { motion } from 'framer-motion';
 import { useState } from 'react';
 
 export default function Feed({ followedTeams, followedTeamsCount, updates: initialUpdates = [] }) {
@@ -25,18 +24,14 @@ export default function Feed({ followedTeams, followedTeamsCount, updates: initi
             <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black py-8">
                 <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                     {/* Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-8"
-                    >
+                    <div className="mb-8 animate-fade-in">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h1 className="text-3xl font-bold text-white mb-2">Team Updates</h1>
                                 <p className="text-gray-400">Latest news from teams you follow</p>
                             </div>
                             <Link
-                                href={route('teams.following')}
+                                href={route('teams.index')}
                                 className="px-4 py-2 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-700 transition"
                             >
                                 Manage Teams ({followedTeamsCount})
@@ -61,14 +56,10 @@ export default function Feed({ followedTeams, followedTeamsCount, updates: initi
                                 ))}
                             </div>
                         )}
-                    </motion.div>
+                    </div>
 
                     {followedTeamsCount === 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-16 bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl border border-gray-700/50"
-                        >
+                        <div className="text-center py-16 bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl border border-gray-700/50 animate-fade-in">
                             <div className="text-6xl mb-4">🏀</div>
                             <h3 className="text-xl font-bold text-white mb-2">No Teams Followed</h3>
                             <p className="text-gray-400 mb-6">Follow teams to see their updates here</p>
@@ -78,17 +69,13 @@ export default function Feed({ followedTeams, followedTeamsCount, updates: initi
                             >
                                 Browse Teams
                             </Link>
-                        </motion.div>
+                        </div>
                     ) : filteredUpdates.length === 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-16 bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl border border-gray-700/50"
-                        >
+                        <div className="text-center py-16 bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl border border-gray-700/50 animate-fade-in">
                             <div className="text-6xl mb-4">📭</div>
                             <h3 className="text-xl font-bold text-white mb-2">No Updates</h3>
                             <p className="text-gray-400">No updates found for this filter</p>
-                        </motion.div>
+                        </div>
                     ) : (
                         <div className="space-y-4">
                             {filteredUpdates.map((update, index) => {
@@ -97,18 +84,17 @@ export default function Feed({ followedTeams, followedTeamsCount, updates: initi
                                 const isGameUpdate = update.type === 'game_result' || update.type === 'upcoming_game';
 
                                 return (
-                                    <motion.article
+                                    <article
                                         key={update.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden"
+                                        className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden animate-fade-in"
+                                        style={{animationDelay: `${index * 0.05}s`}}
                                     >
                                         {update.image && (
                                             <img
                                                 src={update.image}
                                                 alt={update.headline || 'Update image'}
                                                 className="w-full h-48 object-cover"
+                                                loading="lazy"
                                             />
                                         )}
 
@@ -136,6 +122,7 @@ export default function Feed({ followedTeams, followedTeamsCount, updates: initi
                                                                     src={team.logo}
                                                                     alt={team.name}
                                                                     className="w-6 h-6 rounded object-cover"
+                                                                    loading="lazy"
                                                                 />
                                                             )}
                                                             <span className="text-sm font-medium text-white">{team.name}</span>
@@ -155,6 +142,7 @@ export default function Feed({ followedTeams, followedTeamsCount, updates: initi
                                                                     src={update.teams.home.logo}
                                                                     alt={update.teams.home.name}
                                                                     className="w-10 h-10 rounded object-cover"
+                                                                    loading="lazy"
                                                                 />
                                                             )}
                                                             <div>
@@ -189,6 +177,7 @@ export default function Feed({ followedTeams, followedTeamsCount, updates: initi
                                                                     src={update.teams.away.logo}
                                                                     alt={update.teams.away.name}
                                                                     className="w-10 h-10 rounded object-cover"
+                                                                    loading="lazy"
                                                                 />
                                                             )}
                                                         </div>
@@ -221,7 +210,7 @@ export default function Feed({ followedTeams, followedTeamsCount, updates: initi
                                                 </div>
                                             )}
                                         </div>
-                                    </motion.article>
+                                    </article>
                                 );
                             })}
                         </div>

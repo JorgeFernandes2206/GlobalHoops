@@ -1,6 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { motion } from 'framer-motion';
 import { ArrowLeft, TrendingUp, Calendar, Award } from 'lucide-react';
 
 export default function PlayerShow({ auth, player, league }) {
@@ -60,11 +59,7 @@ export default function PlayerShow({ auth, player, league }) {
             <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
                     {/* Hero Card com Info do Jogador */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden"
-                    >
+                    <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl overflow-hidden animate-fade-in">
                         <div className="absolute inset-0 bg-gradient-to-r from-gold/5 to-transparent" />
                         <div className="relative p-8">
                             <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -77,6 +72,7 @@ export default function PlayerShow({ auth, player, league }) {
                                                     src={info.image}
                                                     alt={info.name}
                                                     className="w-full h-full object-contain"
+                                                    loading="lazy"
                                                 />
                                             </div>
                                         </div>
@@ -105,7 +101,7 @@ export default function PlayerShow({ auth, player, league }) {
                                     <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">{info.name}</h1>
                                     <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
                                         {info.teamLogo && (
-                                            <img src={info.teamLogo} alt={info.team} className="w-10 h-10 drop-shadow-lg" />
+                                            <img src={info.teamLogo} alt={info.team} className="w-10 h-10 drop-shadow-lg" loading="lazy" />
                                         )}
                                         <p className="text-2xl text-gray-300 font-medium">{info.team}</p>
                                     </div>
@@ -116,18 +112,12 @@ export default function PlayerShow({ auth, player, league }) {
                                 </div>
                             </div>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Estatísticas Principais em Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                         {mainStats.map((stat, index) => (
-                            <motion.div
-                                key={stat.label}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.1 + index * 0.05 }}
-                                className="group"
-                            >
+                            <div key={stat.label} className="group animate-fade-in" style={{ animationDelay: `${0.1 + index * 0.05}s` }}>
                                 <div className="relative rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6 text-center hover:border-gold/30 transition-all duration-300">
                                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wide mb-2">{stat.label}</p>
                                     <p className="text-4xl font-black text-gold mb-1">
@@ -135,19 +125,14 @@ export default function PlayerShow({ auth, player, league }) {
                                     </p>
                                     <p className="text-xs text-gray-500">Total: {stat.total}</p>
                                 </div>
-                            </motion.div>
+                            </div>
                         ))}
                     </div>
 
                     {/* Two Columns: Additional Stats & Recent Games */}
                     <div className="grid lg:grid-cols-3 gap-6">
                         {/* Additional Statistics */}
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className="lg:col-span-1"
-                        >
+                        <div className="lg:col-span-1 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                             <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6 h-full">
                                 <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                                     <TrendingUp className="w-5 h-5 text-gold" />
@@ -162,29 +147,22 @@ export default function PlayerShow({ auth, player, league }) {
                                     ))}
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
 
                         {/* Recent Games */}
-                        {recentGames && recentGames.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="lg:col-span-2"
-                            >
-                                <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6">
-                                    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                                        <Calendar className="w-5 h-5 text-gold" />
-                                        Recent Performances
-                                    </h2>
+                        <div className="lg:col-span-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                            <div className="rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6">
+                                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <Calendar className="w-5 h-5 text-gold" />
+                                    Recent Performances
+                                </h2>
+                                {recentGames && recentGames.length > 0 ? (
                                     <div className="space-y-3">
                                         {recentGames.map((game, index) => (
-                                            <motion.div
+                                            <div
                                                 key={index}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.4 + index * 0.05 }}
-                                                className="bg-gray-900/50 rounded-2xl p-4 hover:bg-gray-900/70 transition border border-gray-700/30 hover:border-gold/30"
+                                                className="bg-gray-900/50 rounded-2xl p-4 hover:bg-gray-900/70 transition border border-gray-700/30 hover:border-gold/30 animate-fade-in"
+                                                style={{ animationDelay: `${0.4 + index * 0.05}s` }}
                                             >
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div>
@@ -213,12 +191,17 @@ export default function PlayerShow({ auth, player, league }) {
                                                         </div>
                                                     ))}
                                                 </div>
-                                            </motion.div>
+                                            </div>
                                         ))}
                                     </div>
-                                </div>
-                            </motion.div>
-                        )}
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-12">
+                                        <p className="text-lg text-gray-400 mb-2">No recent games found for this player in the last 7 days.</p>
+                                        <p className="text-sm text-gray-500">Try searching for another player or check back later.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

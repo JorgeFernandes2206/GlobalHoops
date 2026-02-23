@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from '@inertiajs/react';
 import axios from 'axios';
@@ -69,12 +68,7 @@ export default function TopPlayersCard({ players: initialPlayers = null, league 
                         href={`/players/${league}/${player.id}`}
                         className="block group"
                     >
-                        <motion.div
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="relative overflow-hidden flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:from-gray-800/80 hover:to-gray-900/80 border border-white/5 hover:border-orange-500/30 transition-all duration-300 cursor-pointer"
-                        >
+                        <div className="relative overflow-hidden flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-900/50 hover:from-gray-800/80 hover:to-gray-900/80 border border-white/5 hover:border-orange-500/30 transition-all duration-300 cursor-pointer">
                             {/* Rank Badge */}
                             <div className="absolute top-2 left-2 w-6 h-6 flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 rounded-lg text-xs font-black text-orange-400">
                                 {index + 1}
@@ -111,7 +105,7 @@ export default function TopPlayersCard({ players: initialPlayers = null, league 
                                 <p className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">{player.points || 0}</p>
                                 <p className="text-[10px] text-gray-500 font-semibold">PTS</p>
                             </div>
-                        </motion.div>
+                        </div>
                     </Link>
                 ))}
             </div>

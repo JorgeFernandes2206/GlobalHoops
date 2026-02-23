@@ -5,7 +5,6 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { motion } from 'framer-motion';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -27,96 +26,85 @@ export default function Login({ status, canResetPassword }) {
             <Head title="Entrar — GlobalHoops" />
 
             {/* Background animated blob */}
-            <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 0.1 }}
-                transition={{ duration: 1.2 }}
-                className="absolute top-20 right-20 h-96 w-96 rounded-full bg-white/5 blur-3xl"
-            />
+            <div className="absolute top-20 right-20 h-96 w-96 rounded-full bg-white/5 blur-3xl animate-fade-in" />
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="relative w-full max-w-md"
-            >
+            <div className="relative w-full max-w-md animate-fade-in">
                 {/* Logo/Header */}
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-flex items-center gap-3 group">
-                        <motion.div
-                            whileHover={{ rotate: 360, scale: 1.1 }}
-                            transition={{ duration: 0.6 }}
-                            className="text-5xl"
-                        >
+                        <div className="text-5xl">
                             🏀
-                        </motion.div>
-                        <div className="text-left">
-                            <h1 className="text-2xl font-extrabold text-black dark:text-white tracking-tight">GlobalHoops</h1>
-                            <p className="text-xs text-black/60 dark:text-white/60">Só Basquetebol 🏀</p>
                         </div>
+                        <span className="text-4xl font-black text-white group-hover:text-orange-500 transition-colors">
+                            GlobalHoops
+                        </span>
                     </Link>
-                    <h2 className="mt-6 text-3xl font-bold text-black dark:text-white">Bem-vindo de volta!</h2>
-                    <p className="mt-2 text-sm text-black/60 dark:text-white/60">Entre na sua conta para continuar</p>
+                    <p className="mt-4 text-gray-400 text-sm">
+                        Sign in to your account
+                    </p>
                 </div>
 
-                {/* Form Card */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                    className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8 border border-orange-100 dark:border-zinc-800"
-                >
+                {/* Card */}
+                <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/90 backdrop-blur-xl rounded-2xl border border-gray-700/50 shadow-2xl p-8">
                     {status && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mb-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
-                        >
-                            <p className="text-sm font-medium text-green-600 dark:text-green-400">{status}</p>
-                        </motion.div>
+                        <div className="mb-6 p-4 rounded-lg bg-green-900/20 border border-green-800 animate-fade-in">
+                            <p className="text-sm font-medium text-green-400">{status}</p>
+                        </div>
                     )}
 
                     <form onSubmit={submit} className="space-y-6">
+                        {/* Email */}
                         <div>
-                            <InputLabel htmlFor="email" value="Email" className="text-gray-300 font-semibold" />
-                            <TextInput
+                            <label htmlFor="email" className="block text-sm font-semibold text-gray-300 mb-2">
+                                Email
+                            </label>
+                            <input
                                 id="email"
                                 type="email"
                                 name="email"
                                 value={data.email}
-                                className="mt-2 block w-full rounded-lg bg-gray-700 border-gray-600 text-white shadow-sm focus:border-white focus:ring-white transition-all duration-200"
+                                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
                                 autoComplete="username"
-                                isFocused={true}
+                                autoFocus
                                 onChange={(e) => setData('email', e.target.value)}
-                                placeholder="seu@email.com"
+                                placeholder="your@email.com"
                             />
-                            <InputError message={errors.email} className="mt-2" />
+                            {errors.email && (
+                                <p className="mt-2 text-sm text-red-400">{errors.email}</p>
+                            )}
                         </div>
 
+                        {/* Password */}
                         <div>
-                            <InputLabel htmlFor="password" value="Password" className="text-gray-300 font-semibold" />
-                            <TextInput
+                            <label htmlFor="password" className="block text-sm font-semibold text-gray-300 mb-2">
+                                Password
+                            </label>
+                            <input
                                 id="password"
                                 type="password"
                                 name="password"
                                 value={data.password}
-                                className="mt-2 block w-full rounded-lg bg-gray-700 border-gray-600 text-white shadow-sm focus:border-white focus:ring-white transition-all duration-200"
+                                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
                                 autoComplete="current-password"
                                 onChange={(e) => setData('password', e.target.value)}
                                 placeholder="••••••••"
                             />
-                            <InputError message={errors.password} className="mt-2" />
+                            {errors.password && (
+                                <p className="mt-2 text-sm text-red-400">{errors.password}</p>
+                            )}
                         </div>
 
+                        {/* Remember & Forgot */}
                         <div className="flex items-center justify-between">
-                            <label className="flex items-center group cursor-pointer">
-                                <Checkbox
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
                                     name="remember"
                                     checked={data.remember}
                                     onChange={(e) => setData('remember', e.target.checked)}
-                                    className="rounded border-gray-300 text-white focus:ring-white"
+                                    className="rounded border-gray-600 bg-gray-900/50 text-orange-500 focus:ring-orange-500/20"
                                 />
-                                <span className="ms-2 text-sm text-gray-300 group-hover:text-white transition-colors">
+                                <span className="ms-2 text-sm text-gray-400">
                                     Remember me
                                 </span>
                             </label>
@@ -124,47 +112,42 @@ export default function Login({ status, canResetPassword }) {
                             {canResetPassword && (
                                 <Link
                                     href={route('password.request')}
-                                    className="text-sm text-gray-300 hover:text-white font-medium transition-colors"
+                                    className="text-sm text-gray-400 hover:text-orange-500 transition-colors"
                                 >
                                     Forgot password?
                                 </Link>
                             )}
                         </div>
 
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                        {/* Submit Button */}
+                        <button
                             type="submit"
                             disabled={processing}
-                            className="w-full rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black hover:bg-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {processing ? 'Signing in...' : 'Sign In →'}
-                        </motion.button>
+                            {processing ? 'Signing in...' : 'Sign In'}
+                        </button>
                     </form>
 
+                    {/* Sign up link */}
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-400">
                             Don't have an account?{' '}
                             <Link
                                 href={route('register')}
-                                className="font-semibold text-white hover:text-gray-300 transition-colors"
+                                className="font-semibold text-orange-500 hover:text-orange-400 transition-colors"
                             >
                                 Sign up now
                             </Link>
                         </p>
                     </div>
-                </motion.div>
-
-                {/* Back to home */}
-                <div className="mt-6 text-center">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-                    >
-                        ← Back to home
-                    </Link>
                 </div>
-            </motion.div>
+
+                {/* Footer */}
+                <p className="mt-6 text-center text-xs text-gray-500">
+                    © {new Date().getFullYear()} GlobalHoops. All rights reserved.
+                </p>
+            </div>
         </div>
     );
 }

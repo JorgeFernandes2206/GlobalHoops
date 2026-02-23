@@ -3,7 +3,6 @@ import { Head } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
-import { motion } from 'framer-motion';
 
 export default function Edit({ mustVerifyEmail, status }) {
     return (
@@ -13,24 +12,15 @@ export default function Edit({ mustVerifyEmail, status }) {
             <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black">
                 <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-8"
-                    >
+                    <div className="mb-8 animate-fade-in">
                         <h1 className="text-3xl font-bold text-white mb-2">Account Settings</h1>
                         <p className="text-gray-400">Manage your profile, security, and preferences</p>
-                    </motion.div>
+                    </div>
 
                     {/* Cards Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Profile Information Card */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="lg:col-span-2 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6"
-                        >
+                        <div className="lg:col-span-2 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-700/30">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gold/10 border border-gold/30">
                                     <svg className="w-5 h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,15 +36,10 @@ export default function Edit({ mustVerifyEmail, status }) {
                                 mustVerifyEmail={mustVerifyEmail}
                                 status={status}
                             />
-                        </motion.div>
+                        </div>
 
                         {/* Update Password Card */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6"
-                        >
+                        <div className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-700/30">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 border border-white/30">
                                     <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,15 +52,10 @@ export default function Edit({ mustVerifyEmail, status }) {
                                 </div>
                             </div>
                             <UpdatePasswordForm />
-                        </motion.div>
+                        </div>
 
                         {/* Delete Account Card */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6"
-                        >
+                        <div className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-700/30">
                                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 border border-white/30">
                                     <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -88,7 +68,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                                 </div>
                             </div>
                             <DeleteUserForm />
-                        </motion.div>
+                        </div>
                     </div>
                 </div>
             </div>

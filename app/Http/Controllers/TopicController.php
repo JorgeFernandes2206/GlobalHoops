@@ -26,7 +26,6 @@ class TopicController extends Controller
         ->latest()
         ->paginate(20);
 
-        // Add latest comment info to each topic
         $topics->getCollection()->transform(function ($topic) {
             $latestComment = $topic->latestComment();
             $topic->latest_comment = $latestComment ? [
@@ -45,11 +44,10 @@ class TopicController extends Controller
     public function show($id)
     {
         $topic = Topic::findOrFail($id);
-        
-        // Increment views
+
+        // Incrementar Vistas
         $topic->incrementViews();
 
-        // Get comments with limited nesting
         $comments = Comment::where('commentable_type', 'Topic')
             ->where('commentable_id', $id)
             ->whereNull('parent_id')

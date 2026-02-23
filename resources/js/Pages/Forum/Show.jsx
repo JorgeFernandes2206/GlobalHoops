@@ -1,7 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CommentSection from '@/Components/CommentSection';
-import { motion } from 'framer-motion';
 import { ArrowLeft, Eye, MessageSquare, Trash2 } from 'lucide-react';
 import { router } from '@inertiajs/react';
 
@@ -15,15 +14,11 @@ export default function ForumShow({ topic, comments }) {
     return (
         <AuthenticatedLayout>
             <Head title={topic.title} />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {/* Back Button */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="mb-6"
-                    >
+                    <div className="mb-6 animate-fade-in">
                         <Link
                             href={route('forum.index')}
                             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
@@ -31,15 +26,10 @@ export default function ForumShow({ topic, comments }) {
                             <ArrowLeft size={20} />
                             Back to Forum
                         </Link>
-                    </motion.div>
+                    </div>
 
                     {/* Topic */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="bg-gray-800/50 rounded-lg p-8 border border-gray-700 mb-8"
-                    >
+                    <div className="bg-gray-800/50 rounded-lg p-8 border border-gray-700 mb-8 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-3">
@@ -94,20 +84,16 @@ export default function ForumShow({ topic, comments }) {
                                 </div>
                             </div>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Comments Section */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                    >
+                    <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
                         <CommentSection
                             comments={comments}
                             commentableType="Topic"
                             commentableId={topic.id}
                         />
-                    </motion.div>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

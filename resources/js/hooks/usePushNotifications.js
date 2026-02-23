@@ -9,20 +9,32 @@ export function usePushNotifications() {
 
     useEffect(() => {
         // Verificar se o browser suporta notificações
+        console.log('🔍 Checking push notification support...');
+        console.log('serviceWorker in navigator:', 'serviceWorker' in navigator);
+        console.log('PushManager in window:', 'PushManager' in window);
+
         if ('serviceWorker' in navigator && 'PushManager' in window) {
+            console.log('✅ Push notifications are supported!');
             setIsSupported(true);
             checkSubscription();
+        } else {
+            console.log('❌ Push notifications are NOT supported');
         }
     }, []);
 
     const checkSubscription = async () => {
         try {
+            console.log('🔍 Checking existing subscription...');
             const registration = await navigator.serviceWorker.ready;
+            console.log('✅ Service worker is ready:', registration);
+
             const sub = await registration.pushManager.getSubscription();
+            console.log('Current subscription:', sub);
+
             setSubscription(sub);
             setIsSubscribed(!!sub);
         } catch (error) {
-            console.error('Error checking subscription:', error);
+            console.error('❌ Error checking subscription:', error);
         }
     };
 
@@ -35,7 +47,6 @@ export function usePushNotifications() {
         setIsLoading(true);
 
         try {
-            // Pedir permissão
             const permission = await Notification.requestPermission();
 
             if (permission !== 'granted') {
@@ -44,21 +55,17 @@ export function usePushNotifications() {
                 return false;
             }
 
-            // Registar service worker
             const registration = await navigator.serviceWorker.register('/sw.js');
             await navigator.serviceWorker.ready;
 
-            // Obter chave pública VAPID
             const response = await fetch('/push/vapid-public-key');
             const { publicKey } = await response.json();
 
-            // Subscrever ao push
             const sub = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(publicKey)
             });
 
-            // Enviar subscription para o servidor
             await fetch('/push/subscribe', {
                 method: 'POST',
                 headers: {

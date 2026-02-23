@@ -1,13 +1,14 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function Index({ teams, selectedLeague, selectedCountry, availableLeagues, availableCountries }) {
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [league, setLeague] = useState(selectedLeague || 'nba');
     const [country, setCountry] = useState(selectedCountry || null);
+    const { isSupported, isSubscribed, isLoading, subscribe, unsubscribe } = usePushNotifications();
 
     const filteredTeams = teams.filter(team => {
         const matchesSearch = team.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -28,7 +29,7 @@ export default function Index({ teams, selectedLeague, selectedCountry, availabl
             preserveState: false,
         });
     };
-    
+
     const handleCountryChange = (newCountry) => {
         setCountry(newCountry);
         router.get(route('teams.index'), { league, country: newCountry }, {
@@ -60,6 +61,17 @@ export default function Index({ teams, selectedLeague, selectedCountry, availabl
         });
     };
 
+    const handlePushToggle = async () => {
+        console.log('🔔 Push toggle clicked!');
+        if (isSubscribed) {
+            const result = await unsubscribe();
+            console.log('Unsubscribe result:', result);
+        } else {
+            const result = await subscribe();
+            console.log('Subscribe result:', result);
+        }
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="Teams" />
@@ -67,14 +79,36 @@ export default function Index({ teams, selectedLeague, selectedCountry, availabl
             <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black py-8">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     {/* Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-8"
-                    >
-                        <h1 className="text-3xl font-bold text-white mb-2">Basketball Teams</h1>
-                        <p className="text-gray-400">Follow your favorite teams and get instant updates</p>
-                    </motion.div>
+                    <div className="mb-8 animate-fade-in">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                            <div>
+                                <h1 className="text-3xl font-bold text-white mb-2">Basketball Teams</h1>
+                                <p className="text-gray-400">Follow your favorite teams and get instant updates</p>
+                            </div>
+
+                            {/* BOTÃO DE PUSH NOTIFICATIONS */}
+                            <button
+                                onClick={handlePushToggle}
+                                disabled={isLoading || !isSupported}
+                                className={`px-6 py-3 rounded-lg font-bold text-lg transition flex items-center gap-3 border-2 ${
+                                    !isSupported
+                                        ? 'bg-red-500/20 border-red-500 text-red-400 cursor-not-allowed'
+                                        : isSubscribed
+                                        ? 'bg-green-500/20 border-green-500 text-green-400 animate-pulse'
+                                        : 'bg-orange-500/20 border-orange-500 text-orange-400 hover:bg-orange-500/30'
+                                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                <span>
+                                    {isLoading
+                                        ? 'A processar...'
+                                        : !isSupported
+                                        ? 'Push não suportado'
+                                        : (isSubscribed ? 'NOTIFICATIONS ON' : 'TURN ON NOTIFICATIONS')
+                                    }
+                                </span>
+                            </button>
+                        </div>
+                    </div>
 
                     {/* League Selector */}
                     <div className="mb-6 flex gap-3">
@@ -154,12 +188,10 @@ export default function Index({ teams, selectedLeague, selectedCountry, availabl
                     {/* Teams Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTeams.map((team, index) => (
-                            <motion.div
+                            <div
                                 key={team.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6"
+                                className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl p-6 animate-fade-in"
+                                style={{animationDelay: `${index * 0.05}s`}}
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
@@ -168,15 +200,16 @@ export default function Index({ teams, selectedLeague, selectedCountry, availabl
                                                 src={team.logo_url}
                                                 alt={team.name}
                                                 className="w-12 h-12 rounded-lg object-contain bg-white/5 p-1"
+                                                loading="lazy"
                                                 onError={(e) => {
                                                     e.target.style.display = 'none';
                                                     e.target.nextElementSibling.style.display = 'flex';
                                                 }}
                                             />
                                         ) : null}
-                                        <div 
+                                        <div
                                             className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold"
-                                            style={{ 
+                                            style={{
                                                 display: team.logo_url ? 'none' : 'flex',
                                                 backgroundColor: team.color ? `#${team.color}20` : 'rgba(255,255,255,0.1)',
                                                 color: team.color ? `#${team.color}` : 'white'
@@ -224,9 +257,7 @@ export default function Index({ teams, selectedLeague, selectedCountry, availabl
                                     )}
                                 </div>
 
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                <button
                                     onClick={() => team.is_following ? handleUnfollow(team.id) : handleFollow(team.id)}
                                     className={`w-full rounded-lg px-4 py-2.5 font-semibold transition ${
                                         team.is_following
@@ -235,8 +266,8 @@ export default function Index({ teams, selectedLeague, selectedCountry, availabl
                                     }`}
                                 >
                                     {team.is_following ? '✓ Following' : '+ Follow'}
-                                </motion.button>
-                            </motion.div>
+                                </button>
+                            </div>
                         ))}
                     </div>
 

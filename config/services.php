@@ -38,6 +38,11 @@ return [
     // ESPN API (grátis, sem necessidade de chaves)
     // URLs configuradas diretamente no BasketballApiService
 
+    // Odds API
+    'odds_api' => [
+        'key' => env('ODDS_API_KEY'),
+    ],
+
     'vapid' => [
         'public_key' => env('VAPID_PUBLIC_KEY'),
         'private_key' => env('VAPID_PRIVATE_KEY'),

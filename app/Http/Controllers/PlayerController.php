@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\BasketballApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
@@ -18,7 +19,10 @@ class PlayerController extends Controller
         $days = (int) $request->query('days', 7);
         $limit = (int) $request->query('limit', 10);
 
-        $players = $this->basketballApi->getTopPlayersWeek($league, $days, $limit);
+        $cacheKey = "api.players.top.{$league}.{$days}.{$limit}";
+        $players = Cache::remember($cacheKey, 900, function () use ($league, $days, $limit) {
+            return $this->basketballApi->getTopPlayersWeek($league, $days, $limit);
+        });
 
         return response()->json($players);
     }
@@ -27,7 +31,7 @@ class PlayerController extends Controller
     public function search(Request $request)
     {
         $query = $request->query('q', '');
-        
+
         if (strlen($query) < 2) {
             return response()->json([
                 'results' => [],
@@ -53,8 +57,6 @@ class PlayerController extends Controller
     // GET /players/{league}/{playerId} - Página de detalhes do jogador
     public function show(string $league, string $playerId)
     {
-        // Increase execution time for this request because fetching player details
-        // may perform multiple external summary requests on first load.
         if (function_exists('set_time_limit')) {
             @set_time_limit(60);
         } else {
@@ -73,8 +75,6 @@ class PlayerController extends Controller
         }
 
         if (!$playerData) {
-            // Don't throw a fatal error: render the player page with a null player
-            // so the frontend can show a friendly message instead of a 500.
             return Inertia::render('Player/Show', [
                 'player' => null,
                 'league' => $league,

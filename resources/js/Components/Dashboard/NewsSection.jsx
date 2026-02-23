@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Link } from '@inertiajs/react';
 import { Newspaper, ExternalLink, TrendingUp, Sparkles } from 'lucide-react';
 
@@ -31,7 +30,7 @@ export default function NewsSection({ news = [] }) {
             {/* Animated Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <div className="absolute inset-0 shadow-inner shadow-purple-500/10" />
-            
+
             <div className="relative">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
@@ -53,26 +52,23 @@ export default function NewsSection({ news = [] }) {
                 {/* News Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {(news || []).slice(0, 2).map((article, index) => (
-                        <motion.a
+                        <a
                             key={article.id || index}
                             href={article.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="group/article relative"
+                            className="group/article relative transition-all duration-300"
                         >
                             {/* Hover Glow */}
                             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/0 via-purple-500/30 to-purple-500/0 rounded-2xl opacity-0 group-hover/article:opacity-100 blur transition-all duration-300" />
-                            
+
                             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-xl border border-gray-700/40 group-hover/article:border-purple-500/40 transition-all duration-300 shadow-lg h-full">
                                 {/* Image */}
                                 {article.image && (
                                     <div className="relative h-52 overflow-hidden">
                                         {/* Gradient Overlay */}
                                         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent z-10" />
-                                        
+
                                         {/* Image with Zoom Effect */}
                                         <img
                                             src={article.image}
@@ -131,7 +127,7 @@ export default function NewsSection({ news = [] }) {
                                     </div>
                                 </div>
                             </div>
-                        </motion.a>
+                        </a>
                     ))}
                 </div>
 

@@ -3,7 +3,6 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { motion } from 'framer-motion';
 
 export default function ForgotPassword({ status }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -21,29 +20,15 @@ export default function ForgotPassword({ status }) {
             <Head title="Forgot Password — GlobalHoops" />
 
             {/* Background animated blob */}
-            <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 0.1 }}
-                transition={{ duration: 1.2 }}
-                className="absolute bottom-20 right-20 h-96 w-96 rounded-full bg-white/5 blur-3xl"
-            />
+            <div className="absolute bottom-20 right-20 h-96 w-96 rounded-full bg-white/5 blur-3xl animate-fade-in" />
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="relative w-full max-w-md"
-            >
+            <div className="relative w-full max-w-md animate-fade-in">
                 {/* Logo/Header */}
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-flex items-center gap-3 group">
-                        <motion.div
-                            whileHover={{ rotate: 360, scale: 1.1 }}
-                            transition={{ duration: 0.6 }}
-                            className="text-5xl"
-                        >
+                        <div className="text-5xl">
                             🏀
-                        </motion.div>
+                        </div>
                         <div className="text-left">
                             <h1 className="text-2xl font-extrabold text-white tracking-tight">GlobalHoops</h1>
                             <p className="text-xs text-gray-400">Basketball Only 🏀</p>
@@ -54,12 +39,7 @@ export default function ForgotPassword({ status }) {
                 </div>
 
                 {/* Form Card */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                    className="bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl shadow-2xl p-8 border border-gray-700/50 backdrop-blur-xl"
-                >
+                <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl shadow-2xl p-8 border border-gray-700/50 backdrop-blur-xl animate-fade-in" style={{ animationDelay: '0.1s' }}>
                     <div className="mb-6 p-4 rounded-lg bg-white/10 border border-white/30">
                         <p className="text-sm text-gray-300">
                             Enter your email and we'll send you a link to reset your password.
@@ -67,13 +47,9 @@ export default function ForgotPassword({ status }) {
                     </div>
 
                     {status && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mb-6 p-4 rounded-lg bg-white/10 border border-white/30"
-                        >
+                        <div className="mb-6 p-4 rounded-lg bg-white/10 border border-white/30 animate-fade-in">
                             <p className="text-sm font-medium text-gray-300">{status}</p>
-                        </motion.div>
+                        </div>
                     )}
 
                     <form onSubmit={submit} className="space-y-6">
@@ -94,15 +70,13 @@ export default function ForgotPassword({ status }) {
                             <InputError message={errors.email} className="mt-2" />
                         </div>
 
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                        <button
                             type="submit"
                             disabled={processing}
                             className="w-full rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black hover:bg-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {processing ? 'Sending...' : 'Send Recovery Link →'}
-                        </motion.button>
+                        </button>
                     </form>
 
                     <div className="mt-6 text-center">
@@ -113,7 +87,7 @@ export default function ForgotPassword({ status }) {
                             ← Back to login
                         </Link>
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Back to home */}
                 <div className="mt-6 text-center">
@@ -124,7 +98,7 @@ export default function ForgotPassword({ status }) {
                         ← Back to home
                     </Link>
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 }

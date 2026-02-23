@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\BasketballApiService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,42 +16,42 @@ class DashboardController extends Controller
 
     public function index(BasketballApiService $basketballApi)
     {
-        // Increase execution time for this endpoint because aggregation may perform
-        // multiple external HTTP calls (scoreboards + summaries) and can exceed
-        // the default PHP max execution time in some environments.
         if (function_exists('set_time_limit')) {
             @set_time_limit(120);
         } else {
             @ini_set('max_execution_time', '120');
         }
-        // Buscar jogos ao vivo de todas as ligas
-        $liveGames = $basketballApi->getLiveGames();
 
-        // Buscar próximos jogos (apenas 1 dia para dashboard, página dedicada tem mais)
-        $upcomingGames = $basketballApi->getUpcomingGames(1);
+        // Cache live games por 1 minuto (jogos ao vivo mudam frequentemente)
+        $liveGames = Cache::remember('dashboard.live_games', 60, function () use ($basketballApi) {
+            return $basketballApi->getLiveGames();
+        });
 
-        // Buscar jogos finalizados (apenas 1 dia para dashboard)
-        $finishedGames = $basketballApi->getFinishedGames(1);
+        // Cache upcoming games por 30 minutos (horários não mudam frequentemente)
+        $upcomingGames = Cache::remember('dashboard.upcoming_games', 1800, function () use ($basketballApi) {
+            return $basketballApi->getUpcomingGames(5);
+        });
 
-        // Buscar últimas notícias (apenas 2 para dashboard)
-        $news = $basketballApi->getNews(null, 2);
+        // Cache finished games por 1 hora (resultados finais não mudam)
+        $finishedGames = Cache::remember('dashboard.finished_games', 3600, function () use ($basketballApi) {
+            return $basketballApi->getFinishedGames(7);
+        });
 
-        // Ligas disponíveis
-        $leagues = $basketballApi->getLeagues();
+        $news = [];
 
-        // Notificações do utilizador
+        $leagues = [];
+
         $notifications = [];
 
-        // Try to compute top players with shorter window for faster loading
-        $topPlayers = [];
-        try {
-            // Request 10 players to get 5 NBA + 5 Euroleague balanced mix
-            $topPlayers = $this->basketballApi->getTopPlayersWeek('all', 7, 10);
-        } catch (\Throwable $e) {
-            Log::error('Failed to compute top players for dashboard: ' . $e->getMessage());
-            $topPlayers = [];
-        }
-
+        // Cache top players por 1 hora
+        $topPlayers = Cache::remember('dashboard.top_players', 3600, function () {
+            try {
+                return $this->basketballApi->getTopPlayersWeek('all', 5, 8);
+            } catch (\Throwable $e) {
+                Log::error('Failed to compute top players for dashboard: ' . $e->getMessage());
+                return [];
+            }
+        });
         return Inertia::render('Dashboard', [
             'liveGames' => $liveGames['response'] ?? [],
             'upcomingGames' => $upcomingGames['response'] ?? [],

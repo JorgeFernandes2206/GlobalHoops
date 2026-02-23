@@ -18,10 +18,9 @@ export default function AuthenticatedLayout({ header, children }) {
             <nav className="sticky top-0 z-50 backdrop-blur-xl bg-gray-900/80 border-b border-gray-800/50 shadow-xl">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-14 items-center justify-between">
-                        {/* Left: Logo + Nav Links */}
                         <div className="flex items-center gap-8">
                             <Link href="/" className="flex items-center gap-2 group">
-                                <ApplicationLogo className="h-8 w-auto fill-current text-gold transition-transform group-hover:scale-105" />
+                                {/* <ApplicationLogo className="h-8 w-auto fill-current text-gold transition-transform group-hover:scale-105" /> */}
                                 <span className="hidden sm:block text-lg font-bold text-white">GlobalHoops</span>
                             </Link>
 
@@ -134,7 +133,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             <div className="mb-3">
                                 <PlayerSearchBar />
                             </div>
-                            
+
                             <div className="px-3 py-2 mb-2 border-b border-gray-800/50">
                                 <div className="text-sm font-medium text-white">{user.name}</div>
                                 <div className="text-xs text-gray-400">{user.email}</div>

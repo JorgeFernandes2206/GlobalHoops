@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { motion } from 'framer-motion';
 import { Calendar, Trophy, Flame } from 'lucide-react';
 import LiveGamesGrid from '@/Components/Dashboard/LiveGamesGrid';
 import UpcomingGamesList from '@/Components/Dashboard/UpcomingGamesList';
@@ -9,6 +8,7 @@ import FinishedGamesGrid from '@/Components/Dashboard/FinishedGamesGrid';
 import { GameCardSkeleton } from '@/Components/SkeletonLoader';
 import axios from 'axios';
 
+console.log('GamesPage loaded');
 export default function GamesPage() {
     const [liveGames, setLiveGames] = useState([]);
     const [upcomingGames, setUpcomingGames] = useState([]);
@@ -16,9 +16,10 @@ export default function GamesPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('live'); // live, upcoming, finished
 
+
     useEffect(() => {
         loadGames();
-        
+
         // Auto-refresh a cada 30 segundos
         const interval = setInterval(loadGames, 30000);
         return () => clearInterval(interval);
@@ -31,10 +32,34 @@ export default function GamesPage() {
                 axios.get('/api/games/upcoming'),
                 axios.get('/api/games/finished'),
             ]);
-            
+
             setLiveGames(live.data || []);
             setUpcomingGames(upcoming.data || []);
-            setFinishedGames(finished.data || []);
+            setFinishedGames(finished.data?.response || []);
+
+            // DEBUG: logar os jogos finalizados recebidos diretamente após fetch
+            if (typeof window !== 'undefined') {
+                console.log('GamesPage API finishedGames:', finished.data?.response);
+                // Mostrar total de jogos brutos vindos da Euroleague API
+                if (typeof finished.data?.debug_total_games !== 'undefined') {
+                    console.log('Euroleague debug_total_games:', finished.data.debug_total_games);
+                }
+                // Listar todos os jogos finalizados, incluindo Euroleague
+                if (Array.isArray(finished.data?.response)) {
+                    finished.data.response.forEach(game => {
+                        console.log('[FINISHED GAME]', {
+                            date: game.date,
+                            league: game.league?.name || '',
+                            home: game.teams?.home?.name || '',
+                            away: game.teams?.away?.name || '',
+                            score_home: game.teams?.home?.score,
+                            score_away: game.teams?.away?.score,
+                            status: game.status,
+                            identifier: game.id || '',
+                        });
+                    });
+                }
+            }
         } catch (error) {
             console.error('Error loading games:', error);
         } finally {
@@ -111,12 +136,7 @@ export default function GamesPage() {
                     </div>
 
                     {/* Content */}
-                    <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                    >
+                    <div key={activeTab} className="animate-fade-in">
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {[...Array(6)].map((_, i) => (
@@ -130,13 +150,13 @@ export default function GamesPage() {
                                         <LiveGamesGrid games={liveGames} />
                                     </div>
                                 )}
-                                
+
                                 {activeTab === 'upcoming' && (
                                     <div className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl">
                                         <UpcomingGamesList games={upcomingGames} />
                                     </div>
                                 )}
-                                
+
                                 {activeTab === 'finished' && (
                                     <div className="rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 backdrop-blur-xl shadow-xl">
                                         <FinishedGamesGrid games={finishedGames} />
@@ -144,7 +164,7 @@ export default function GamesPage() {
                                 )}
                             </>
                         )}
-                    </motion.div>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

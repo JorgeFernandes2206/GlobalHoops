@@ -1,9 +1,8 @@
 <?php
+require __DIR__ . '/vendor/autoload.php';
 
-require 'vendor/autoload.php';
+use Minishlink\WebPush\VAPID;
 
-$keys = \Minishlink\WebPush\VAPID::createVapidKeys();
-
-echo "Add these to your .env file:\n\n";
-echo "VAPID_PUBLIC_KEY={$keys['publicKey']}\n";
-echo "VAPID_PRIVATE_KEY={$keys['privateKey']}\n";
+$keys = VAPID::createVapidKeys();
+echo "Public Key:  {$keys['publicKey']}\n";
+echo "Private Key: {$keys['privateKey']}\n";
